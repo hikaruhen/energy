@@ -1,0 +1,10 @@
+{
+  "name": "energy-and-machines",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "check": "node --check site/app.js && node --check site/physics.js && node --check site/scenes.js && node --check site/config.js && node --check site/classroom.js && node --check site/comparison.js && node --test tests/physics.test.mjs"
+  }
+}

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#173d45"><meta name="description" content="動手探索功、動能、位能、能量守恆與簡單機械。">
+<title>能量與簡單機械</title><link rel="stylesheet" href="style.css?v=30">
+</head>
+<body><main>
+<header class="masthead"><h1>能量與簡單機械</h1></header>
+<div class="selectors"><div><label for="group">主題</label><select id="group"></select></div><div><label for="mode">實驗</label><select id="mode"></select></div></div>
+<div class="lab">
+ <section class="experiment" aria-labelledby="scene-title">
+  <h2 id="scene-title" class="sr-only"></h2><p id="task" class="task"></p>
+  <div id="scene-wrap"><div id="work-scales" hidden><span id="force-readout">施力 10 N</span><span>施力 1格10 N · 位移 1格1 m</span></div><div id="vector-legend" hidden></div><div id="gesture-hint" role="status" hidden></div><div id="canvas-scroll"><svg id="scene" viewBox="0 0 640 370" role="img" aria-labelledby="scene-title scene-description"></svg></div></div>
+  <div class="actions"><button id="calculate" class="primary" aria-pressed="false">計算</button><button id="play">播放</button><button id="step" aria-label="向前播放一小步">單步</button><button id="work-locate" hidden>定位方箱</button><button id="work-center" hidden>回起點</button><button id="reset" aria-label="重設目前實驗">重設</button></div>
+  <section id="energy-calculation" hidden aria-label="能量公式與計算流程"></section>
+  <p id="status" role="status" class="sr-only">調整參數後，按下計算。</p>
+ </section>
+ <aside class="inspector" aria-label="計算結果與參數，可向下捲動" tabindex="0">
+  <div class="panel-nav"><button data-jump="results" aria-controls="results">看結果</button><button data-jump="parameters" aria-controls="parameters">調參數</button></div>
+  <section id="results" aria-labelledby="results-title"><div class="section-head"><h2 id="results-title">觀察結果</h2><span id="live-state">按計算看結果</span></div><div id="result-content"></div></section>
+  <section class="parameters" id="parameters"><div class="section-head"><h2>調整參數</h2><span>拖曳也可調整</span></div><div id="controls"></div></section>
+  <p id="scene-description" class="sr-only"></p>
+ </aside>
+</div>
+</main><script type="module" src="app.js?v=30"></script></body></html>
+

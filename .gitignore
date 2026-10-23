@@ -1,0 +1,5 @@
+sources/
+private/
+node_modules/
+*.pdf
+*.zip
