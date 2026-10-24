@@ -239,3 +239,9 @@ svg .strand-reading{font-size:var(--diagram-font);display:block!important}.compo
 svg .arm-output{stroke:#8656a3}svg text.arm-output{fill:#8656a3;stroke:#f6f9f5}svg .arm-input{stroke:#b34829}svg text.arm-input{fill:#b34829;stroke:#f6f9f5}svg .height-tick{font-size:var(--diagram-font)}
 @media(min-width:1100px) and (min-height:601px) and (hover:hover) and (pointer:fine){body[data-mode=compare] .inspector{grid-template-rows:minmax(0,1fr) auto}body[data-mode=compare] #results{height:100%;min-height:0}}
 svg .lever-handle-label{fill:#b34829}
+/* A gesture inside a diagram is manipulation, not page scrolling. The work grid
+   still pans from blank space; the rest of the page remains normally scrollable. */
+body:not([data-mode=work2d]) #scene-wrap,body:not([data-mode=work2d]) #scene{touch-action:none}
+#scene .drag-zone{pointer-events:all;touch-action:none}
+#scene .drag-line{pointer-events:stroke;touch-action:none}
+#scene{-webkit-user-select:none;-webkit-touch-callout:none}

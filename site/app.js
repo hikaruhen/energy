@@ -1,8 +1,8 @@
-import {classroomTools,fairWheelTable,pairTable} from './classroom.js?v=30';
-import {groups,modes,defaults,shortNames,dragKeys} from './config.js?v=30';
-import {clamp,fmt,kinetic,gravity,elastic,directionalWork,axisDisplacement,springAt,flightAt,projectileAt,pendulumInitial,pendulumForces,pendulumStep,pendulumEnergy,machine,inclineComparison,leverComparison,pulleyComparison,wheelComparison,approx,springObservationTime,pendulumObservation} from './physics.js?v=30';
-import {scene,workGeometry} from './scenes.js?v=30';
-import {comparisonDrop} from './comparison.js?v=30';
+import {classroomTools,fairWheelTable,pairTable} from './classroom.js?v=31';
+import {groups,modes,defaults,shortNames,dragKeys} from './config.js?v=31';
+import {clamp,fmt,kinetic,gravity,elastic,directionalWork,axisDisplacement,springAt,flightAt,projectileAt,pendulumInitial,pendulumForces,pendulumStep,pendulumEnergy,machine,inclineComparison,leverComparison,pulleyComparison,wheelComparison,approx,springObservationTime,pendulumObservation} from './physics.js?v=31';
+import {scene,workGeometry} from './scenes.js?v=31';
+import {comparisonDrop} from './comparison.js?v=31';
 const $=s=>document.querySelector(s);
 const states=Object.fromEntries(Object.keys(modes).map(id=>[id,defaults(id)]));
 let current='work2d',groupId='work',running=false,drag=null,lastFrame=0,paintTime=0;
@@ -189,8 +189,9 @@ function draw(){
   }
   if(current==='fall'&&state().view?.components){const z=projectileAt(state().p,state().time);$('#vector-legend').insertAdjacentHTML('beforeend',`<div class="component-reading">水平速度 ${approx(z.vx)} m/s · 鉛直速度 ${approx(z.vy)} m/s（右／上正）</div>`);}
   if(pendIds.includes(current))$('#vector-legend').hidden=state().view?.forces===false;
-  // Full 48px minimum on control points. Line hits use 96px.
-  svg.querySelectorAll('.drag-zone').forEach(z=>z.setAttribute('r',Math.max(26,24*640/width)));
+  // Transparent targets use screen pixels; do not enlarge the visible vectors.
+  svg.querySelectorAll('circle.drag-zone').forEach(z=>z.setAttribute('r',48*640/width));
+  svg.querySelectorAll('.drag-line').forEach(z=>z.setAttribute('stroke-width',112*640/width));
   if(dragKeys[current]){
     const d=modes[current].params.find(d=>d.key===dragKeys[current]),b=bounds(d);
     svg.querySelectorAll('[data-drag=object]').forEach(z=>{for(const [key,value] of Object.entries({tabindex:0,role:'slider','aria-label':d.label,'aria-valuemin':b.min,'aria-valuemax':b.max,'aria-valuenow':state().p[d.key],'aria-valuetext':`${fmt(state().p[d.key])} ${d.unit}`}))z.setAttribute(key,value);});
@@ -355,7 +356,7 @@ function dragUpdate(e){
   }
   else if(['height','fall','throw'].includes(current)){key='h';value=((g.groundY||315)+(g.cameraY||0)-q.y-drag.offsetY)/g.sy;}
   else if(current==='spring'){key='x';value=(q.x-drag.offsetX-355)/340;}
-  else if(pendIds.includes(current)){key='angle';value=Math.atan2(q.x-g.cx,q.y-g.cy)*180/Math.PI;}
+  else if(pendIds.includes(current)){key='angle';value=Math.atan2(q.x-drag.offsetX-g.cx,q.y-drag.offsetY-g.cy)*180/Math.PI;}
   else if(current==='incline'){key='progress';value=drag.startValue+((q.x-drag.startPoint.x)*g.dx-(q.y-drag.startPoint.y)*g.dy)/(g.dx*g.dx+g.dy*g.dy)*100;}
   else if(current==='pulley'){
     if(drag.target==='pulley-add'){drag.ghost=q;draw();return;}
@@ -387,19 +388,34 @@ svg.addEventListener('pointerdown',e=>{
     dragTarget=zeroHandle?'force':(Math.abs(q.x-x)<=29&&Math.abs(q.y-y)<=26)||boxDistance<forceDistance?'object':'force';
   }
   if(current==='lever'){
-    const g=geometry,load=Math.hypot(q.x-g.lx,q.y-(g.ly+71)),pivot=Math.hypot(q.x-g.cx,q.y-(g.cy+25)),effort=Math.hypot(q.x-g.rx,q.y-clamp(q.y,Math.min(g.ry,g.forceEnd),Math.max(g.ry,g.forceEnd)));
+    const g=geometry,load=Math.hypot(Math.max(g.lx-27-q.x,0,q.x-g.lx-27),Math.max(g.ly+48-q.y,0,q.y-g.ly-94)),pivot=Math.hypot(q.x-g.cx,q.y-(g.cy+25)),effort=Math.hypot(q.x-g.rx,q.y-clamp(q.y,Math.min(g.ry,g.forceEnd),Math.max(g.ry,g.forceEnd)));
     dragTarget=load<=pivot&&load<=effort?'lever-load':pivot<=effort?'lever-pivot':'lever-force';
   }
-  if(current==='pulley'&&dragTarget!=='pulley-add'){
-    const g=geometry,load=Math.hypot(q.x-g.bx,q.y-g.by+23),effort=Math.hypot(q.x-g.ex,q.y-clamp(q.y,Math.min(g.ey,g.ey+g.forceSign*g.F*g.forceScale),Math.max(g.ey,g.ey+g.forceSign*g.F*g.forceScale)));
-    dragTarget=load<effort?'pulley-load':'pulley-pull';
+  if(current==='pulley'){
+    const g=geometry,rectDistance=(x,y,right,bottom)=>Math.hypot(Math.max(x-q.x,0,q.x-right),Math.max(y-q.y,0,q.y-bottom));
+    const candidates=[{target:'pulley-add',distance:rectDistance(475,80,605,240)},
+      {target:'pulley-load',distance:rectDistance(g.bx-27,g.by-46,g.bx+27,g.by)},
+      {target:'pulley-pull',distance:Math.hypot(q.x-g.ex,q.y-clamp(q.y,Math.min(g.ey,g.ey+g.forceSign*g.F*g.forceScale),Math.max(g.ey,g.ey+g.forceSign*g.F*g.forceScale)))}];
+    candidates.sort((a,b)=>a.distance-b.distance);dragTarget=candidates[0].target;
   }
-  if(current==='compare'&&dragTarget!=='supply'){
-    const id=dragTarget.endsWith('B')?'B':'A',r=geometry.rows[id];
-    if(q.x>=r.x-28&&q.x<=r.right&&q.y<=r.y&&q.y>=r.y-r.stackHeight)dragTarget='mass'+id;
+  if(current==='compare'){
+    // Expanded targets can overlap: resolve against visible tray, stacks and shafts.
+    const rectDistance=(x,y,right,bottom)=>Math.hypot(Math.max(x-q.x,0,q.x-right),Math.max(y-q.y,0,q.y-bottom));
+    const candidates=[{target:'supply',distance:rectDistance(480,12,624,94)}];
+    for(const id of ['A','B']){
+      const r=geometry.rows[id];
+      candidates.push({target:'mass'+id,distance:rectDistance(r.x-28,r.y-r.stackHeight,r.right,r.y)});
+      candidates.push({target:'speed'+id,distance:Math.hypot(q.x-clamp(q.x,r.right,r.end>r.right?r.end:r.right+24),q.y-r.sy)});
+    }
+    candidates.sort((a,b)=>a.distance-b.distance);dragTarget=candidates[0].target;
   }
   if(['height','fall','throw'].includes(current)){const h=current==='height'?p.h:projectileAt(p,state().time).h;offsetY=((geometry.groundY||315)+(geometry.cameraY||0)-h*geometry.sy)-q.y;}
   if(current==='spring')offsetX=q.x-(355+springAt(p,state().time).x*340);
+  if(pendIds.includes(current)){
+    const at=state().pend||pendulumInitial(p);
+    offsetX=q.x-(geometry.cx+p.L*120*Math.sin(at.theta));
+    offsetY=q.y-(geometry.cy+p.L*120*Math.cos(at.theta));
+  }
   if(current==='fixed')offsetY=q.y-(geometry.start+p.lift*geometry.scale);
   if(current==='wheel')offsetY=q.y-(geometry.start+p.stroke*geometry.scale);
   if(current==='movable')offsetY=q.y-(geometry.start-p.lift*geometry.scale);
@@ -454,6 +470,11 @@ svg.addEventListener('keydown',e=>{
   e.preventDefault();changeParam('F',clamp(value,0,100));svg.querySelector('[data-drag=force]')?.focus({preventScroll:true});
 });
 svg.addEventListener('pointermove',e=>{if(drag){e.preventDefault();dragUpdate(e);}});
+// Safari and other touch browsers must not turn an accepted object drag into a pan.
+// Keep blank work-grid panning and scrolling outside the diagram available.
+for(const type of ['touchstart','touchmove'])wrap.addEventListener(type,e=>{
+  if((drag||e.target.closest?.('[data-drag]'))&&e.cancelable)e.preventDefault();
+},{passive:false});
 function endDrag(e){
   if(!drag||e.pointerId!==drag.id)return;
   if(current==='lever')hint('位置與提升已更新');
