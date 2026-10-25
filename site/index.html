@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173d45"><meta name="description" content="動手探索功、動能、位能、能量守恆與簡單機械。">
-<title>能量與簡單機械</title><link rel="stylesheet" href="style.css?v=31">
+<title>能量與簡單機械</title><link rel="stylesheet" href="style.css?v=32">
 </head>
 <body><main>
-<header class="masthead"><h1>能量與簡單機械</h1></header>
+<header class="masthead"><h1>能量與簡單機械</h1><div class="display-tools"><button id="rotate-screen" aria-pressed="false">橫向</button><button id="fullscreen" aria-pressed="false">全螢幕</button></div></header>
 <div class="selectors"><div><label for="group">主題</label><select id="group"></select></div><div><label for="mode">實驗</label><select id="mode"></select></div></div>
 <div class="lab">
  <section class="experiment" aria-labelledby="scene-title">
@@ -23,5 +23,5 @@
   <p id="scene-description" class="sr-only"></p>
  </aside>
 </div>
-</main><script type="module" src="app.js?v=31"></script></body></html>
+</main><p id="display-notice" role="status" hidden></p><script type="module" src="display.js?v=32"></script><script type="module" src="app.js?v=32"></script></body></html>
 

@@ -245,3 +245,40 @@ body:not([data-mode=work2d]) #scene-wrap,body:not([data-mode=work2d]) #scene{tou
 #scene .drag-zone{pointer-events:all;touch-action:none}
 #scene .drag-line{pointer-events:stroke;touch-action:none}
 #scene{-webkit-user-select:none;-webkit-touch-callout:none}
+/* Compact teaching workspace. Rotation changes coordinates, never the diagram scale. */
+.masthead{display:flex;align-items:center;justify-content:space-between;gap:8px}.display-tools{display:flex;gap:6px;flex:none}.display-tools button{font-size:16px;min-height:48px;padding:5px 9px}
+#display-notice{position:fixed;bottom:10px;left:12px;right:12px;z-index:20;background:#fffbe8;border:1px solid #7e9c8e;border-radius:6px;padding:10px;font-size:16px}
+@media(max-width:700px) and (orientation:portrait){
+ main{padding:6px}.masthead{margin-bottom:6px}h1{font-size:20px}.display-tools{gap:4px}.display-tools button{font-size:15px;padding:4px 7px}
+ .selectors{margin-bottom:6px;gap:6px}.selectors label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.selectors select{font-size:16px;padding-left:6px}
+ .lab{gap:6px}.inspector>section{padding:10px;margin-bottom:6px}.experiment #scene-wrap{margin:4px 4px 0}body:not([data-mode=work2d]) #scene{height:265px;aspect-ratio:auto}
+ body[data-mode=work2d] #canvas-scroll{height:235px}.actions{padding:5px;gap:4px}.actions button{font-size:16px}
+ body[data-mode=fall] #vector-legend{font-size:18px;padding:4px 8px;gap:0}#vector-legend{font-size:16px;padding:4px 6px;gap:3px 8px}
+ .section-head{margin-bottom:6px}.energy-row{margin:5px 0}.facts{margin-top:6px;padding-top:6px;gap:6px}.parameter{padding:5px 0}
+}
+body.screen-turned{overflow:hidden;height:var(--screen-h)}
+body.screen-turned main{position:fixed;left:0;top:0;max-width:none!important;width:var(--screen-h);height:var(--screen-w)!important;margin:0;transform-origin:0 0;transform:translateX(var(--screen-w)) rotate(90deg)}
+body.compact-landscape{overflow:hidden;height:100dvh}
+body.compact-landscape main{max-width:none;height:100dvh;padding:5px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:48px minmax(0,1fr);gap:5px}
+body.compact-landscape .masthead{grid-column:2;grid-row:1;margin:0}body.compact-landscape h1{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+body.compact-landscape .selectors,body.compact-landscape .selectors.single{grid-column:1;grid-row:1;max-width:none;margin:0;gap:5px}body.compact-landscape .selectors label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}body.compact-landscape .selectors select{height:48px;min-height:48px;font-size:16px;padding:5px 22px 5px 6px}
+body.compact-landscape .lab{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5px;min-height:0;align-items:stretch}
+body.compact-landscape .experiment{position:relative;top:0;display:flex;flex-direction:column;min-height:0;width:auto}
+body.compact-landscape #scene-wrap{display:flex;flex-direction:column;flex:1;min-height:0;margin:3px 3px 0}
+body.compact-landscape #scene{flex:1;height:0;min-height:0;width:100%;aspect-ratio:auto}
+body.compact-landscape #canvas-scroll{flex:1;height:0;min-height:0}
+body.compact-landscape #vector-legend{flex:none;font-size:15px;padding:2px 5px;gap:1px 8px}
+body.compact-landscape[data-mode=fall] #vector-legend{font-size:16px;line-height:1.15;gap:0;padding:2px 5px}
+body.compact-landscape #work-scales{font-size:13px;padding:2px 5px;gap:0}body.compact-landscape #force-readout{font-size:20px}
+body.compact-landscape .actions{flex:none;padding:4px;gap:3px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}body.compact-landscape .actions button{min-height:48px;font-size:15px;padding:3px 1px}
+body.compact-landscape .inspector{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:4px;padding:0;overflow:hidden;min-height:0;width:auto}
+body.compact-landscape .panel-nav{display:none}body.compact-landscape .inspector>section{margin:0;padding:6px;min-height:0;max-height:100%;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:auto}
+body.compact-landscape .section-head{margin-bottom:3px;gap:4px;flex-wrap:wrap}body.compact-landscape h2{font-size:17px}body.compact-landscape .section-head span{font-size:12px}
+body.compact-landscape .energy-row{margin:3px 0}body.compact-landscape .energy-label>span{font-size:16px}body.compact-landscape .energy-label strong{font-size:24px;line-height:1.15}body.compact-landscape .track{height:4px;margin-top:2px}
+body.compact-landscape .facts{gap:4px;margin-top:4px;padding-top:4px}body.compact-landscape .fact span{font-size:14px}body.compact-landscape .fact strong{font-size:21px}body.compact-landscape .result-note{font-size:14px;margin-top:5px}
+body.compact-landscape .parameter{padding:3px 0}body.compact-landscape .parameter label{font-size:16px}body.compact-landscape .parameter-head{grid-template-columns:minmax(0,1fr) 70px}body.compact-landscape .param-inputs{margin-top:0;gap:4px}
+body.compact-landscape .formula-grid{grid-template-columns:1fr}body.compact-landscape .formula-card{font-size:15px}body.compact-landscape svg .caption{display:none}body.compact-landscape svg :is(.arm-label,.strand-number,.handle-name,.angle-label,.lift-label,.ramp-label,.lever-handle-label){display:block}
+body.compact-landscape .inspector:has(#parameters[hidden]){grid-template-rows:minmax(0,1fr)}
+@media(min-width:800px){body.compact-landscape .lab{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}body.compact-landscape .inspector{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(0,1fr)}}
+body.compact-landscape.landscape-wide .lab{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}body.compact-landscape.landscape-wide .inspector{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(0,1fr)}
+@media(min-width:1100px) and (min-height:601px) and (hover:hover) and (pointer:fine){body:not(.compact-landscape) main{grid-template-rows:48px 48px minmax(0,1fr)}}
