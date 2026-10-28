@@ -1,4 +1,4 @@
-import {approx,wheelComparison,pendulumEnergy} from './physics.js?v=32';
+import {approx,wheelComparison,pendulumEnergy} from './physics.js?v=33';
 const button=(action,label)=>`<button type="button" data-lesson="${action}">${label}</button>`;
 export function classroomTools(id,s){
  const v=s.view||{},group=(title,html)=>`<div class="lesson-tools"><p>${title}</p><div class="lesson-buttons">${html}</div></div>`;

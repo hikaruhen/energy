@@ -1,8 +1,8 @@
-import {classroomTools,fairWheelTable,pairTable} from './classroom.js?v=32';
-import {groups,modes,defaults,shortNames,dragKeys} from './config.js?v=32';
-import {clamp,fmt,kinetic,gravity,elastic,directionalWork,axisDisplacement,springAt,flightAt,projectileAt,pendulumInitial,pendulumForces,pendulumStep,pendulumEnergy,machine,inclineComparison,leverComparison,pulleyComparison,wheelComparison,approx,springObservationTime,pendulumObservation} from './physics.js?v=32';
-import {scene,workGeometry} from './scenes.js?v=32';
-import {comparisonDrop} from './comparison.js?v=32';
+import {classroomTools,fairWheelTable,pairTable} from './classroom.js?v=33';
+import {groups,modes,defaults,shortNames,dragKeys} from './config.js?v=33';
+import {clamp,fmt,kinetic,gravity,elastic,directionalWork,axisDisplacement,springAt,flightAt,projectileAt,pendulumInitial,pendulumForces,pendulumStep,pendulumEnergy,machine,inclineComparison,leverComparison,pulleyComparison,wheelComparison,approx,springObservationTime,pendulumObservation} from './physics.js?v=33';
+import {scene,workGeometry} from './scenes.js?v=33';
+import {comparisonDrop} from './comparison.js?v=33';
 const $=s=>document.querySelector(s);
 const states=Object.fromEntries(Object.keys(modes).map(id=>[id,defaults(id)]));
 let current='work2d',groupId='work',running=false,drag=null,lastFrame=0,paintTime=0;
@@ -174,6 +174,7 @@ function draw(){
   // Size interaction targets in CSS pixels, not in fixed SVG units.
   $('#work-scales').hidden=current!=='work2d';if(current==='work2d')$('#force-readout').textContent=`施力 ${state().p.F} N`;
   svg.setAttribute('viewBox',current==='work2d'?workGeometry(state().p).viewBox:current==='compare'?'0 0 640 500':current==='fall'?'0 0 640 500':current==='wheel'?'0 0 640 560':['lever','pulley'].includes(current)?'0 0 640 520':current==='incline'?'0 0 640 460':'0 0 640 370');
+  if(current==='work2d'){const pane=document.querySelector('#canvas-scroll');svg.style.setProperty('--work-view-size',Math.max(1,Math.floor(Math.min(pane.clientWidth,pane.clientHeight)))+'px');}
   const matrix=svg.getScreenCTM();const scale=matrix?Math.hypot(matrix.a,matrix.b):1;const width=640*(scale||1);
   svg.style.setProperty('--diagram-font',`${Math.max(20,16*640/width)}px`);
   if(current==='work2d'){svg.dataset.movementAxis=state().p.axis;svg.dataset.displacement=state().p.s;}
@@ -220,12 +221,12 @@ function updateButtons(){
 let hintTimer;
 function hint(message,persist=false){clearTimeout(hintTimer);$('#gesture-hint').textContent=message;$('#gesture-hint').hidden=false;if(!persist)hintTimer=setTimeout(()=>$('#gesture-hint').hidden=true,2200);}
 function locateWork(onlyIfOutside=false){
- const pane=$('#canvas-scroll'),{x,y}=workGeometry(state().p),px=x+256,py=y+256;
- if(!onlyIfOutside||px-30<pane.scrollLeft||px+30>pane.scrollLeft+pane.clientWidth||py-28<pane.scrollTop||py+28>pane.scrollTop+pane.clientHeight){pane.scrollLeft=px-pane.clientWidth/2;pane.scrollTop=py-pane.clientHeight/2;}
- workView={left:pane.scrollLeft,top:pane.scrollTop};
+ const pane=$('#canvas-scroll');pane.scrollLeft=0;pane.scrollTop=0;
+ workView={left:0,top:0};
+ if(!onlyIfOutside)hint('已顯示完整方格，無須移動觀看區');
 }
 $('#work-locate').addEventListener('click',()=>locateWork());
-function centerWork(){const pane=$('#canvas-scroll');pane.scrollLeft=256-pane.clientWidth/2;pane.scrollTop=256-pane.clientHeight/2;}
+function centerWork(){const pane=$('#canvas-scroll');pane.scrollLeft=0;pane.scrollTop=0;}
 function choose(id,resetView=false){
   if(current==='work2d'&&!resetView)workView={left:$('#canvas-scroll').scrollLeft,top:$('#canvas-scroll').scrollTop};
   if(drag&&svg.hasPointerCapture(drag.id))svg.releasePointerCapture(drag.id);
@@ -342,7 +343,7 @@ function dragUpdate(e){
     }else{
       const mx=q.x-drag.startPoint.x,my=q.y-drag.startPoint.y;
       if(!drag.moveAxis){
-        const scale=svg.getScreenCTM().a;
+        const m=svg.getScreenCTM(),scale=Math.hypot(m.a,m.b);
         if(Math.hypot(mx,my)*scale<4)return;
         drag.moveAxis=Math.abs(mx)>=Math.abs(my)?'x':'y';
       }

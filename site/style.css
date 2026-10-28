@@ -282,3 +282,7 @@ body.compact-landscape .inspector:has(#parameters[hidden]){grid-template-rows:mi
 @media(min-width:800px){body.compact-landscape .lab{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}body.compact-landscape .inspector{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(0,1fr)}}
 body.compact-landscape.landscape-wide .lab{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}body.compact-landscape.landscape-wide .inspector{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(0,1fr)}
 @media(min-width:1100px) and (min-height:601px) and (hover:hover) and (pointer:fine){body:not(.compact-landscape) main{grid-template-rows:48px 48px minmax(0,1fr)}}
+/* Work: fit the complete 20 × 20 grid; dragging manipulates objects, never pans. */
+body[data-mode=work2d] #canvas-scroll{display:grid;place-items:center;overflow:hidden;scrollbar-gutter:auto;touch-action:none;overscroll-behavior:none}
+body[data-mode=work2d] #scene{width:var(--work-view-size,235px)!important;height:var(--work-view-size,235px)!important;max-width:100%;flex:none}
+body[data-mode=work2d] #scene-wrap{touch-action:none}

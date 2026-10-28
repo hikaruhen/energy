@@ -1,4 +1,4 @@
-import {comparisonAt} from './physics.js?v=32';
+import {comparisonAt} from './physics.js?v=33';
 
 export const compareLayout={supply:{x:535,y:52},rows:{A:230,B:410},start:100,pixelsPerMeter:30};
 export function comparisonScene(p,time,dragPixels){
