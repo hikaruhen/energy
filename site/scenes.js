@@ -1,5 +1,5 @@
-import { springAt, flightAt, projectileAt, pendulumInitial, pendulumForces, axisDisplacement, machine, inclineComparison, leverComparison, pulleyComparison, wheelComparison, approx, fmt } from './physics.js?v=33';
-import {comparisonScene} from './comparison.js?v=33';
+import { springAt, flightAt, projectileAt, pendulumInitial, pendulumForces, axisDisplacement, machine, inclineComparison, leverComparison, pulleyComparison, wheelComparison, approx, fmt } from './physics.js?v=34';
+import {comparisonScene} from './comparison.js?v=34';
 const line=(x1,y1,x2,y2,cls='ground',more='')=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="${cls}" ${more}/>`;
 const text=(x,y,t,cls='',anchor='start')=>`<text x="${x}" y="${y}" class="${cls} ${y<80||y>315?'caption':''}" text-anchor="${anchor}">${t}</text>`;
 const box=(x,y,w=58,h=52)=>`<rect x="${x-w/2}" y="${y-h}" width="${w}" height="${h}" rx="4" class="object"/><path d="M${x-8} ${y-h}v13h16v-13" fill="none" stroke="#795516" stroke-width="2"/>`;
@@ -32,11 +32,11 @@ export function scene(id,s,dragPixels=96) {
     const arrow=(x1,y1,x2,y2,cls,marker)=>line(x1,y1,x2,y2,cls,`vector-effect="non-scaling-stroke" marker-end="url(#${marker})"`);
     for(let i=-10;i<=10;i++)out+=line(i*sc,-240,i*sc,240,'faint')+line(-240,i*sc,240,i*sc,'faint');
     out+=line(-240,cy,240,cy,'reference')+line(cx,-240,cx,240,'reference');
-    if(dx!==0||dy!==0){
-      const vx=dx*sc,vy=-dy*sc,ox=p.axis==='y'?50:0,oy=p.axis==='x'?50:0;
-      out+=arrow(cx+ox,cy+oy,cx+ox+vx,cy+oy+vy,'path work-vector','move-head');
-    }
     out+=box(x,y+26)+circle(cx,cy,5,'white','#476d7e');
+    if(dx!==0||dy!==0){
+      const vx=dx*sc,vy=-dy*sc;
+      out+=arrow(cx,cy,cx+vx,cy+vy,'path work-vector','move-head');
+    }
     if(p.F>0)out+=arrow(fx+ax*start,fy+ay*start,fx+ax*end,fy+ay*end,'force work-vector','force-head');
     else out+=line(fx+ax*start,fy+ay*start,fx+ax*end,fy+ay*end,'zero-force','vector-effect="non-scaling-stroke"')+circle(fx+ax*end,fy+ay*end,4/scale,'white','#7a8d85');
     hits+=lineZone(fx+ax*start,fy+ay*start,fx+ax*end,fy+ay*end,'force',dragPixels).replace('/>',` tabindex="0" role="slider" aria-label="拖曳調整施力，每格10N" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p.F}" aria-valuetext="${p.F} N"/>`)+hit(x,y,'object').replace('/>',` tabindex="0" role="slider" aria-label="拖曳移動方箱，每格1m" aria-valuemin="-8" aria-valuemax="8" aria-valuenow="${p.s}" aria-valuetext="${p.axis==='x'?'水平':'垂直'}位移 ${p.s} m"/>`);

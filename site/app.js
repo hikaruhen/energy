@@ -1,8 +1,8 @@
-import {classroomTools,fairWheelTable,pairTable} from './classroom.js?v=33';
-import {groups,modes,defaults,shortNames,dragKeys} from './config.js?v=33';
-import {clamp,fmt,kinetic,gravity,elastic,directionalWork,axisDisplacement,springAt,flightAt,projectileAt,pendulumInitial,pendulumForces,pendulumStep,pendulumEnergy,machine,inclineComparison,leverComparison,pulleyComparison,wheelComparison,approx,springObservationTime,pendulumObservation} from './physics.js?v=33';
-import {scene,workGeometry} from './scenes.js?v=33';
-import {comparisonDrop} from './comparison.js?v=33';
+import {classroomTools,fairWheelTable,pairTable} from './classroom.js?v=34';
+import {groups,modes,defaults,shortNames,dragKeys} from './config.js?v=34';
+import {clamp,fmt,kinetic,gravity,elastic,directionalWork,axisDisplacement,springAt,flightAt,projectileAt,pendulumInitial,pendulumForces,pendulumStep,pendulumEnergy,machine,inclineComparison,leverComparison,pulleyComparison,wheelComparison,approx,springObservationTime,pendulumObservation} from './physics.js?v=34';
+import {scene,workGeometry} from './scenes.js?v=34';
+import {comparisonDrop} from './comparison.js?v=34';
 const $=s=>document.querySelector(s);
 const states=Object.fromEntries(Object.keys(modes).map(id=>[id,defaults(id)]));
 let current='work2d',groupId='work',running=false,drag=null,lastFrame=0,paintTime=0;

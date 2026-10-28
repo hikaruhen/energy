@@ -83,15 +83,15 @@ test('方向符號獨立於數值，完整線段才對應格數',async()=>{
  }
 });
 
-test('施力跟隨物體並對齊水平垂直，位移跨過起點不換側',async()=>{
+test('施力跟隨物體，位移向量從原點開始且長度符號一致',async()=>{
  const {scene}=await import('../site/scenes.js');
  for(const axis of ['x','y'])for(const s of [-8,-1,1,8])for(const direction of ['left','right','up','down']){
   const p={axis,s,direction,F:100},g=workGeometry(p);
   if(g.ax!==0)near(g.fy,g.y);else near(g.fx,g.x);
   const small=workGeometry({...p,s:s>0?1:-1,F:10});near(small.fx,small.x+small.ax*29);near(small.fy,small.y+small.ay*26);
   const html=scene('work2d',{p}).html;
-  if(axis==='x')assert.match(html,/<line x1="0" y1="50" x2="[^"]+" y2="50" class="path work-vector"/);
-  else assert.match(html,/<line x1="50" y1="0" x2="50" y2="[^"]+" class="path work-vector"/);
+  if(axis==='x')assert.match(html,/<line x1="0" y1="0" x2="[^"]+" y2="0" class="path work-vector"/);
+  else assert.match(html,/<line x1="0" y1="0" x2="0" y2="[^"]+" class="path work-vector"/);
  }
 });
 
@@ -250,4 +250,14 @@ test('同側短施力臂：施力點在支點與物件之間、費力省時不�
  assert.equal(z.forceSign,-1);assert.ok(z.a<z.b);assert.ok(z.F>z.weight);assert.ok(z.duration<z.directTime);near(z.F*z.effortArm,z.weight*z.loadArm);near(z.W,z.U);near(z.targetWork,3.92);
  }
  assert.throws(()=>leverComparison({layout:'same-short',pivotPos:.5,forcePos:3.5,loadPos:1.5,progress:0,m:2,g:9.8}),RangeError);
+});
+
+test('功的原點位移向量：零值不畫，正負與上下左右端點共用狀態',()=>{
+ for(const axis of ['x','y'])for(const s of [-8,-1,0,1,8]){
+  const p={axis,s,direction:'right',F:10},html=scene('work2d',{p}).html;
+  const match=html.match(/<line x1="([^"]+)" y1="([^"]+)" x2="([^"]+)" y2="([^"]+)" class="path work-vector"/);
+  if(s===0){assert.equal(match,null);continue;}
+  assert.ok(match);assert.deepEqual(match.slice(1).map(Number),[0,0,axis==='x'?s*24:0,axis==='y'?-s*24:0]);
+  assert.ok(html.indexOf('class="object"')<html.indexOf('class="path work-vector"'),'位移向量不被方箱遮蔽');
+ }
 });
