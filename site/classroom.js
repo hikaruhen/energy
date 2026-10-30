@@ -1,10 +1,10 @@
-import {approx,wheelComparison,pendulumEnergy} from './physics.js?v=34';
+import {approx,wheelComparison,pendulumEnergy} from './physics.js?v=35';
 const button=(action,label)=>`<button type="button" data-lesson="${action}">${label}</button>`;
 export function classroomTools(id,s){
  const v=s.view||{},group=(title,html)=>`<div class="lesson-tools"><p>${title}</p><div class="lesson-buttons">${html}</div></div>`;
  if(id==='compare')return group('比較預設',button('mass-double','同速、質量兩倍')+button('speed-double','同質量、速度兩倍'))+group('速率精調（每次 1 m/s）',button('A-minus','A −')+button('A-plus','A ＋')+button('B-minus','B −')+button('B-plus','B ＋'));
  if(id==='fall')return group('觀察尺度（播放中固定）',button('near',`${v.fallScale!=='full'?'● ':''}近距離`)+button('full',`${v.fallScale==='full'?'● ':''}完整高度`)+button('components',`${v.components?'● ':''}速度分量`));
- if(id==='spring')return group('等量比較（沿用初始形變絕對值）',button('set-compress','等量壓縮')+button('set-stretch','等量拉長'))+group('停在關鍵位置',button('spring-natural','原長')+button('spring-compress','最大壓縮')+button('spring-stretch','最大拉長'));
+ if(id==='spring')return group('等量比較（沿用初始形變絕對值）',button('set-compress','等量壓縮')+button('set-stretch','等量拉長'))+group(`<span data-spring-position-label>${s.springStarted?'停在關鍵位置（目前振幅）':'初始設定／關鍵位置（極限 ±0.5 m）'}</span>`,button('spring-natural','原長')+button('spring-compress','最大壓縮')+button('spring-stretch','最大拉長'));
  if(['pendulum','damped'].includes(id))return group('停在關鍵位置',button('pend-left','左端點')+button('pend-bottom','最低點')+button('pend-right','右端點'))+group('觀察選項',button('forces',v.forces===false?'顯示力向量':'隱藏力向量')+button('pair',s.pair?.running?'暫停同條件比較':'演示同條件比較'))+'<p class="lesson-note">比較使用本實驗初始條件，不改另一實驗。</p>';
  return '';
 }

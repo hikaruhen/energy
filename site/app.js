@@ -1,8 +1,8 @@
-import {classroomTools,fairWheelTable,pairTable} from './classroom.js?v=34';
-import {groups,modes,defaults,shortNames,dragKeys} from './config.js?v=34';
-import {clamp,fmt,kinetic,gravity,elastic,directionalWork,axisDisplacement,springAt,flightAt,projectileAt,pendulumInitial,pendulumForces,pendulumStep,pendulumEnergy,machine,inclineComparison,leverComparison,pulleyComparison,wheelComparison,approx,springObservationTime,pendulumObservation} from './physics.js?v=34';
-import {scene,workGeometry} from './scenes.js?v=34';
-import {comparisonDrop} from './comparison.js?v=34';
+import {classroomTools,fairWheelTable,pairTable} from './classroom.js?v=35';
+import {groups,modes,defaults,shortNames,dragKeys} from './config.js?v=35';
+import {clamp,fmt,kinetic,gravity,elastic,directionalWork,axisDisplacement,springAt,flightAt,projectileAt,pendulumInitial,pendulumForces,pendulumStep,pendulumEnergy,machine,inclineComparison,leverComparison,pulleyComparison,wheelComparison,approx,springObservationTime,pendulumObservation} from './physics.js?v=35';
+import {scene,workGeometry} from './scenes.js?v=35';
+import {comparisonDrop} from './comparison.js?v=35';
 const $=s=>document.querySelector(s);
 const states=Object.fromEntries(Object.keys(modes).map(id=>[id,defaults(id)]));
 let current='work2d',groupId='work',running=false,drag=null,lastFrame=0,paintTime=0;
@@ -132,6 +132,7 @@ function renderControls(){
   if(current==='pulley')$('#controls').insertAdjacentHTML('afterbegin','<div class="pulley-buttons"><button data-pulley="fixed">定滑輪</button><button data-pulley="single">單一動滑輪</button><button data-pulley="add">＋定輪與動輪</button><button data-pulley="remove">−一組</button><button data-pulley="reverse">延伸：反向使用</button></div><p class="pulley-state" aria-live="polite"></p>');
 }
 function syncControls(skip=null){
+  const springLabel=document.querySelector('[data-spring-position-label]');if(current==='spring'&&springLabel)springLabel.textContent=state().springStarted?'停在關鍵位置（目前振幅）':'初始設定／關鍵位置（極限 ±0.5 m）';
   if(current==='pulley'){
     const p=state().p;$('.pulley-state').textContent=p.count?`${p.drive==='single'?'單一動滑輪 · 向上拉繩':`${p.count} 組動滑輪＋${p.count} 個定滑輪 · ${p.drive==='reverse'?'拉滑輪座':'拉繩端'}`}`:'定滑輪 · 拉繩端';
     $('[data-pulley=remove]').disabled=p.count===0;$('[data-pulley=add]').disabled=p.count===3;
@@ -144,7 +145,7 @@ function syncControls(skip=null){
     });
   }
 }
-function rebase(){state().time=0;state().pend=null;running=false;updateButtons();}
+function rebase(){state().time=0;state().pend=null;if(current==='spring')state().springStarted=false;running=false;updateButtons();}
 function changeParam(key,value,from=null){
   const d=modes[current].params.find(d=>d.key===key);if(!d)return;
   let next=value;
@@ -276,7 +277,10 @@ $('#controls').addEventListener('click',e=>{
  if(current==='spring'){
   running=false;
   if(action.startsWith('set-')){p.x=(action==='set-compress'?-1:1)*Math.abs(p.x);rebase();}
-  else s.time=springObservationTime(p,s.time,action.slice(7));
+  else if(!s.springStarted&&['spring-compress','spring-stretch'].includes(action)){
+   const d=modes.spring.params.find(d=>d.key==='x');p.x=action==='spring-compress'?d.min:d.max;rebase();
+   hint(`已設定初始${p.x<0?'最大壓縮':'最大拉長'} ${fmt(p.x)} m`);
+  }else s.time=springObservationTime(p,s.time,action.slice(7));
  }
  if(pendIds.includes(current)){
   if(action==='forces')s.view.forces=s.view.forces===false;
@@ -307,6 +311,7 @@ function advance(dt){
     if(!s.pend)s.pend=pendulumInitial(s.p);let left=dt;
     while(left>1e-10){let step=Math.min(left,1/240);s.pend=pendulumStep(physicsParams(),s.pend,step);left-=step;}
   }
+  if(current==='spring')s.springStarted=true;
   s.time+=dt;
   if(current==='incline'){s.p.progress=Math.min(100,s.p.progress+dt*20);if(s.p.progress>=100){running=false;updateButtons();}}
   if(current==='wheel'){s.p.stroke=Math.min(wheelComparison(s.p).targetStroke,s.p.stroke+dt*.5);if(s.p.stroke>=wheelComparison(s.p).targetStroke){running=false;updateButtons();}}
@@ -321,9 +326,9 @@ $('#play').addEventListener('click',()=>{
   if(['incline','lever','pulley'].includes(current)&&state().p.progress>=100){state().p.progress=0;state().time=0;draw();results();}
   if(current==='compare'&&state().time>=geometry.duration)state().time=0;
   if(['fall','throw'].includes(current)&&projectileAt(state().p,state().time).ended)state().time=0;
-  running=!running;lastFrame=0;updateButtons();$('#status').textContent=running?'播放中；可隨時暫停或抓取物件。':'已暫停，可繼續播放。';
+  running=!running;if(current==='spring'&&running){state().springStarted=true;syncControls();}lastFrame=0;updateButtons();$('#status').textContent=running?'播放中；可隨時暫停或抓取物件。':'已暫停，可繼續播放。';
 });
-$('#step').addEventListener('click',()=>{running=false;advance(1/30);draw();results();updateButtons();$('#status').textContent='前進1/30秒，保留計算啟用狀態。';});
+$('#step').addEventListener('click',()=>{running=false;advance(1/30);draw();results();syncControls();updateButtons();$('#status').textContent='前進1/30秒，保留計算啟用狀態。';});
 function frame(t){
   const pair=state().pair;
   if(pair?.running){const dt=pair.last?Math.min((t-pair.last)/1000,.05):0;pair.last=t;let left=dt;while(left>1e-10){const h=Math.min(left,1/240);pair.no=pendulumStep({...pair.p,damping:false},pair.no,h);pair.yes=pendulumStep({...pair.p,damping:true},pair.yes,h);left-=h;}pair.time+=dt;}

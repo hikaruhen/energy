@@ -1,5 +1,5 @@
-import { springAt, flightAt, projectileAt, pendulumInitial, pendulumForces, axisDisplacement, machine, inclineComparison, leverComparison, pulleyComparison, wheelComparison, approx, fmt } from './physics.js?v=34';
-import {comparisonScene} from './comparison.js?v=34';
+import { springAt, flightAt, projectileAt, pendulumInitial, pendulumForces, axisDisplacement, machine, inclineComparison, leverComparison, pulleyComparison, wheelComparison, approx, fmt } from './physics.js?v=35';
+import {comparisonScene} from './comparison.js?v=35';
 const line=(x1,y1,x2,y2,cls='ground',more='')=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="${cls}" ${more}/>`;
 const text=(x,y,t,cls='',anchor='start')=>`<text x="${x}" y="${y}" class="${cls} ${y<80||y>315?'caption':''}" text-anchor="${anchor}">${t}</text>`;
 const box=(x,y,w=58,h=52)=>`<rect x="${x-w/2}" y="${y-h}" width="${w}" height="${h}" rx="4" class="object"/><path d="M${x-8} ${y-h}v13h16v-13" fill="none" stroke="#795516" stroke-width="2"/>`;
