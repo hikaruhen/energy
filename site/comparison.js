@@ -1,6 +1,6 @@
-import {comparisonAt} from './physics.js?v=36';
+import {comparisonAt} from './physics.js?v=37';
 
-export const compareLayout={supply:{x:535,y:52},rows:{A:240,B:480},start:100,pixelsPerMeter:30};
+export const compareLayout={supply:{x:535,y:52},rows:{A:240,B:480},start:100,pixelsPerMeter:25};
 export function comparisonScene(p,time,dragPixels){
  const z=comparisonAt(p,time),{supply,rows,start,pixelsPerMeter}=compareLayout;
  let html=`<rect x="480" y="12" width="144" height="82" rx="8" class="block-tray"/><text x="180" y="60" class="mass-label">每塊 2 kg</text>`;
@@ -14,7 +14,7 @@ export function comparisonScene(p,time,dragPixels){
   const sy=y-16,end=right+v*12;
   for(let tick=0;tick<=10;tick++)html+=`<line x1="${right+tick*12}" y1="${sy+17}" x2="${right+tick*12}" y2="${sy+24}" class="speed-tick"/>`+(tick%5===0?`<text x="${right+tick*12}" y="${y+65}" text-anchor="middle" class="tick-number">${tick}</text>`:'');
   html+=v>0?`<line x1="${right}" y1="${sy}" x2="${end}" y2="${sy}" class="path" marker-end="url(#move-head)"/>`:`<circle cx="${right+12}" cy="${sy}" r="5" class="speed-zero"/>`;
-  html+=`<text x="620" y="${y-70}" text-anchor="end" class="speed-label">${v} m/s</text>`;
+  html+=`<text x="634" y="${y-70}" text-anchor="end" class="speed-label">${v} m/s</text>`;
   // The visible stack and speed tip stay distinct even when transparent targets overlap.
   const stackWidth=56,stackHeight=n*32,hitWidth=Math.max(stackWidth+dragPixels/3,dragPixels),hitHeight=Math.max(stackHeight+dragPixels/3,dragPixels);
   html+=`<rect x="${x-28+(stackWidth-hitWidth)/2}" y="${y-stackHeight+(stackHeight-hitHeight)/2}" width="${hitWidth}" height="${hitHeight}" class="drag-zone" data-drag="mass${id}" tabindex="0" role="slider" aria-label="${id}質量，拖取或回收方塊" aria-valuemin="2" aria-valuemax="10" aria-valuenow="${mass}" aria-valuetext="${mass}公斤"/>`;

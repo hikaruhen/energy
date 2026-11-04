@@ -1,8 +1,8 @@
-import {classroomTools,fairWheelTable,pairTable} from './classroom.js?v=36';
-import {groups,modes,defaults,shortNames,dragKeys} from './config.js?v=36';
-import {clamp,fmt,kinetic,gravity,elastic,directionalWork,axisDisplacement,springAt,flightAt,projectileAt,pendulumInitial,pendulumForces,pendulumStep,pendulumEnergy,machine,inclineComparison,leverComparison,pulleyComparison,wheelComparison,approx,springObservationTime,pendulumObservation} from './physics.js?v=36';
-import {scene,workGeometry} from './scenes.js?v=36';
-import {comparisonDrop} from './comparison.js?v=36';
+import {classroomTools,fairWheelTable,pairTable} from './classroom.js?v=37';
+import {groups,modes,defaults,shortNames,dragKeys} from './config.js?v=37';
+import {clamp,fmt,workAt,comparisonAt,kinetic,gravity,elastic,directionalWork,axisDisplacement,springAt,flightAt,projectileAt,pendulumInitial,pendulumForces,pendulumStep,pendulumEnergy,machine,inclineComparison,leverComparison,pulleyComparison,wheelComparison,approx,springObservationTime,pendulumObservation} from './physics.js?v=37';
+import {scene,workGeometry} from './scenes.js?v=37';
+import {comparisonDrop} from './comparison.js?v=37';
 const $=s=>document.querySelector(s);
 const states=Object.fromEntries(Object.keys(modes).map(id=>[id,defaults(id)]));
 let current='work2d',groupId='work',running=false,drag=null,lastFrame=0,paintTime=0;
@@ -11,6 +11,12 @@ let geometry={},workView=null;
 const machineIds=['incline','lever','pulley','fixed','movable','wheel'];
 const pendIds=['pendulum','damped'];
 const state=()=>states[current];
+function shownState(s=state()){
+ return current==='work2d'&&s.workPlayback?{...s,p:{...s.p,s:workAt(s.p,s.time).s}}:s;
+}
+function settleWork(){
+ const s=state();if(current==='work2d'&&s.workPlayback){s.p.s=Math.round(workAt(s.p,s.time).s);delete s.workPlayback;s.time=0;running=false;}
+}
 const lastModes=Object.fromEntries(groups.map(g=>[g.id,g.modes[0]]));
 function physicsParams(s=state(),id=current){return {...s.p,progress:s.p.progress/100,damping:id==='damped'};}
 function bounds(d){
@@ -38,7 +44,7 @@ function bounds(d){
   return {min:d.min,max:d.max};
 }
 function energyData(){
-  const s=state(),p=s.p;let rows=[],facts=[],note='',scale=1;
+  const s=shownState(),p=s.p;let rows=[],facts=[],note='',scale=1;
   const row=(label,value,color,unit='J',total=false)=>({label,value,color,unit,total});
   const K=(v)=>row('動能',v,'var(--kinetic)');
   const U=(v)=>row('重力位能',v,'var(--gravity)');
@@ -145,8 +151,9 @@ function syncControls(skip=null){
     });
   }
 }
-function rebase(){state().time=0;state().pend=null;if(current==='spring')state().springStarted=false;running=false;updateButtons();}
+function rebase(){delete state().workPlayback;state().rate=1;state().time=0;state().pend=null;if(current==='spring')state().springStarted=false;running=false;updateButtons();}
 function changeParam(key,value,from=null){
+  settleWork();
   const d=modes[current].params.find(d=>d.key===key);if(!d)return;
   let next=value;
   if(!d.options){
@@ -176,11 +183,12 @@ function draw(){
   $('#work-scales').hidden=current!=='work2d';if(current==='work2d')$('#force-readout').textContent=`施力 ${state().p.F} N`;
   svg.setAttribute('viewBox',current==='work2d'?workGeometry(state().p).viewBox:current==='compare'?'0 0 640 560':current==='fall'?'0 0 640 500':current==='wheel'?'0 0 640 560':['lever','pulley'].includes(current)?'0 0 640 520':current==='incline'?'0 0 640 460':'0 0 640 370');
   if(current==='work2d'){const pane=document.querySelector('#canvas-scroll');svg.style.setProperty('--work-view-size',Math.max(1,Math.floor(Math.min(pane.clientWidth,pane.clientHeight)))+'px');}
+  svg.dataset.playbackTime=state().time;svg.dataset.playbackRate=state().rate||1;
   const matrix=svg.getScreenCTM();const scale=matrix?Math.hypot(matrix.a,matrix.b):1;const width=640*(scale||1);
   svg.style.setProperty('--compare-reading-font',Math.max(30,22/scale)+'px');svg.style.setProperty('--compare-tick-font',Math.max(24,18/scale)+'px');
   svg.style.setProperty('--diagram-font',`${Math.max(20,16*640/width)}px`);
   if(current==='work2d'){svg.dataset.movementAxis=state().p.axis;svg.dataset.displacement=state().p.s;}
-  const {html,meta}=scene(current,state(),96*640/width);svg.innerHTML=html;geometry=meta;
+  const {html,meta}=scene(current,shownState(),96*640/width);svg.innerHTML=html;geometry=meta;
   if(current==='lever'&&drag){const key={'lever-load':'loadPos','lever-force':'forcePos','lever-pivot':'pivotPos'}[drag.target],lim=bounds(modes.lever.params.find(d=>d.key===key));svg.insertAdjacentHTML('beforeend',`<line x1="${60+lim.min*geometry.sc}" y1="${geometry.cy}" x2="${60+lim.max*geometry.sc}" y2="${geometry.cy}" class="valid-range"/>`);}
   if(current==='compare'&&drag?.ghost)svg.insertAdjacentHTML('beforeend',`<rect x="${drag.ghost.x-28}" y="${drag.ghost.y-16}" width="56" height="32" class="object block-ghost"/>`);
   if(current==='pulley'&&drag?.ghost)svg.insertAdjacentHTML('beforeend',`<circle cx="${drag.ghost.x}" cy="${drag.ghost.y}" r="25" class="pulley-ghost"/>`);
@@ -211,14 +219,15 @@ function draw(){
     }
   }
 }
+function ended(){
+ const s=state();return current==='work2d'?!!s.workPlayback&&workAt(s.p,s.time).ended:current==='compare'?comparisonAt(s.p,s.time).ended:['fall','throw'].includes(current)?projectileAt(s.p,s.time).ended:['incline','lever','pulley'].includes(current)?s.p.progress>=100:current==='wheel'?s.p.stroke>=wheelComparison(s.p).targetStroke:false;
+}
 function updateButtons(){
-  if(current==='compare')$('#live-state').textContent=state().calculated?(running?'演示中':'已暫停'):'按計算演示';
-  $('#work-locate').hidden=current!=='work2d';$('#work-center').hidden=current!=='work2d';$('#play').hidden=!modes[current].animate;$('#step').hidden=!modes[current].animate;
-  const ended=['fall','throw'].includes(current)&&projectileAt(state().p,state().time).ended||['incline','lever','pulley'].includes(current)&&state().p.progress>=100||current==='wheel'&&state().p.stroke>=wheelComparison(state().p).targetStroke;
-  $('#play').textContent=running?'暫停':ended||current==='compare'&&state().time>=geometry.duration?'重播':'播放';
-  if(current==='incline'&&!running&&!ended)$('#play').textContent='同步提升';
-  if(['lever','pulley','wheel'].includes(current)&&!running&&!ended)$('#play').textContent='演示提升';
-  $('#calculate').textContent=current==='compare'?'計算並演示':state().calculated?'已計算':'計算';$('#calculate').setAttribute('aria-pressed',String(state().calculated));
+ const s=state();$('#work-locate').hidden=current!=='work2d';$('#work-center').hidden=current!=='work2d';$('#play').hidden=false;$('#step').hidden=false;
+ $('#play').textContent=running?'暫停':ended()?'重播':'播放';
+ $('#calculate').textContent='計算＋播放';$('#calculate').setAttribute('aria-pressed',String(s.calculated));
+ $('#slow-replay').disabled=!s.calculated;
+ $('#live-state').textContent=s.calculated?`${running?'播放中':'已暫停'} · ${s.rate===.25?'¼× 慢速':'1×'}`:'按計算＋播放';
 }
 let hintTimer;
 function hint(message,persist=false){clearTimeout(hintTimer);$('#gesture-hint').textContent=message;$('#gesture-hint').hidden=false;if(!persist)hintTimer=setTimeout(()=>$('#gesture-hint').hidden=true,2200);}
@@ -297,8 +306,23 @@ $('#controls').addEventListener('click',e=>{
  }
  renderControls();syncControls();draw();results();updateButtons();
 });
-$('#calculate').addEventListener('click',()=>{const invalid=$('#controls [aria-invalid="true"]');if(invalid){invalid.closest('details')?.setAttribute('open','');invalid.focus();$('#status').textContent='請先修正未套用的輸入，再按計算。';return;}state().calculated=true;results();updateButtons();$('#status').textContent='已啟用：拖曳、調整或播放時，結果會持續即時更新。';});
-$('#calculate').addEventListener('click',()=>{if(current==='compare'){state().time=0;running=true;lastFrame=0;draw();results();updateButtons();}});
+function startPlayback(rate=1){
+ const invalid=$('#controls [aria-invalid="true"]');if(invalid){invalid.closest('details')?.setAttribute('open','');invalid.focus();$('#status').textContent='請先修正未套用的輸入';return;}
+ const s=state();if(drag&&svg.hasPointerCapture(drag.id))svg.releasePointerCapture(drag.id);drag=null;
+ if(s.pair)s.pair.running=false;
+ s.calculated=true;s.rate=rate;s.time=0;s.pend=pendIds.includes(current)?pendulumInitial(s.p):null;
+ if(['incline','lever','pulley'].includes(current))s.p.progress=0;
+ if(current==='wheel')s.p.stroke=0;
+ if(current==='fall')delete s.camera;
+ if(current==='work2d')s.workPlayback=true;
+ if(current==='spring')s.springStarted=true;
+ running=!ended();lastFrame=0;paintTime=0;draw();results();syncControls();updateButtons();
+ if(current==='work2d')hint('功的示意移動，不推算加速度');
+ if(current==='damped')hint('從初始條件重播，累積熱能由 0 重新起算');
+ $('#status').textContent=rate===.25?'從初始條件以四分之一速度重播，物理數值不變':'已計算並從初始條件播放';
+}
+$('#calculate').addEventListener('click',()=>startPlayback(1));
+$('#slow-replay').addEventListener('click',()=>startPlayback(.25));
 $('#work-center').addEventListener('click',()=>{
   if(current!=='work2d')return;
   if(drag&&svg.hasPointerCapture(drag.id))svg.releasePointerCapture(drag.id);drag=null;
@@ -314,6 +338,7 @@ function advance(dt){
   }
   if(current==='spring')s.springStarted=true;
   s.time+=dt;
+  if(current==='work2d'&&s.workPlayback&&workAt(s.p,s.time).ended){s.time=workAt(s.p,s.time).duration;running=false;}
   if(current==='incline'){s.p.progress=Math.min(100,s.p.progress+dt*20);if(s.p.progress>=100){running=false;updateButtons();}}
   if(current==='wheel'){s.p.stroke=Math.min(wheelComparison(s.p).targetStroke,s.p.stroke+dt*.5);if(s.p.stroke>=wheelComparison(s.p).targetStroke){running=false;updateButtons();}}
   if(current==='pulley'){s.p.progress=Math.min(100,s.p.progress+dt/pulleyComparison(s.p).duration*100);if(s.p.progress>=100){running=false;updateButtons();}}
@@ -322,19 +347,17 @@ function advance(dt){
   if(['fall','throw'].includes(current)&&projectileAt(s.p,s.time).ended){running=false;updateButtons();$('#status').textContent='演示截至接地前，不模擬碰撞。';}
 }
 $('#play').addEventListener('click',()=>{
-  if(state().pair)state().pair.running=false;
-  if(current==='wheel'&&state().p.stroke>=wheelComparison(state().p).targetStroke){state().p.stroke=0;state().time=0;draw();results();}
-  if(['incline','lever','pulley'].includes(current)&&state().p.progress>=100){state().p.progress=0;state().time=0;draw();results();}
-  if(current==='compare'&&state().time>=geometry.duration)state().time=0;
-  if(['fall','throw'].includes(current)&&projectileAt(state().p,state().time).ended)state().time=0;
-  running=!running;if(current==='spring'&&running){state().springStarted=true;syncControls();}lastFrame=0;updateButtons();$('#status').textContent=running?'播放中；可隨時暫停或抓取物件。':'已暫停，可繼續播放。';
+ if(state().pair)state().pair.running=false;
+ if(!running&&(ended()||current==='work2d'&&!state().workPlayback)){startPlayback(state().rate||1);return;}
+ running=!running;if(current==='spring'&&running){state().springStarted=true;syncControls();}lastFrame=0;draw();results();updateButtons();
+ $('#status').textContent=running?'播放中；可暫停或抓取物件':'已暫停，可繼續播放';
 });
-$('#step').addEventListener('click',()=>{running=false;advance(1/30);draw();results();syncControls();updateButtons();$('#status').textContent='前進1/30秒，保留計算啟用狀態。';});
+$('#step').addEventListener('click',()=>{if(current==='work2d'&&!state().workPlayback){state().workPlayback=true;state().time=0;}running=false;advance(1/30);draw();results();syncControls();updateButtons();$('#status').textContent='前進1/30秒，保留計算啟用狀態。';});
 function frame(t){
   const pair=state().pair;
   if(pair?.running){const dt=pair.last?Math.min((t-pair.last)/1000,.05):0;pair.last=t;let left=dt;while(left>1e-10){const h=Math.min(left,1/240);pair.no=pendulumStep({...pair.p,damping:false},pair.no,h);pair.yes=pendulumStep({...pair.p,damping:true},pair.yes,h);left-=h;}pair.time+=dt;}
 
-  if(running){if(lastFrame){advance(Math.min((t-lastFrame)/1000,.1));}lastFrame=t;if(t-paintTime>30){draw();results();paintTime=t;}}
+  if(running){if(lastFrame){advance(Math.min((t-lastFrame)/1000,.1)*(state().rate||1));}lastFrame=t;if(!running||t-paintTime>30){draw();results();updateButtons();paintTime=t;}}
   if(pair?.running&&t-(pair.paint||0)>80){pair.paint=t;results();}
   requestAnimationFrame(frame);
 }
@@ -383,7 +406,7 @@ function dragUpdate(e){
 }
 svg.addEventListener('pointerdown',e=>{
   const target=e.target.closest('[data-drag]');if(!target||drag||e.button>0)return;
-  e.preventDefault();const q=point(e),p=state().p;let offsetX=0,offsetY=0;
+  e.preventDefault();settleWork();const q=point(e),p=state().p;let offsetX=0,offsetY=0;
   let dragTarget=target.dataset.drag;
   // Large screen-pixel hit areas may overlap. Pick the nearest visible feature.
   if(current==='work2d'){
@@ -433,6 +456,7 @@ svg.addEventListener('pointerdown',e=>{
   $('#status').textContent=modes[current].animate?'已抓取並暫停；移動將設定新的釋放狀態。':'拖曳中，物件與參數即時更新。';
 });
 svg.addEventListener('keydown',e=>{
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))settleWork();
   if(current==='pulley'){
     const target=e.target.dataset.drag;if(!target)return;
     if(target==='pulley-add'){if(['Enter',' '].includes(e.key)){e.preventDefault();configurePulley('add');}return;}

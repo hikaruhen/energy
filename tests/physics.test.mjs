@@ -123,7 +123,7 @@ test('動能比較：兩組獨立、同時鐘、質量不改速度、零速率',
  const doubled=comparisonAt({...p,m:4},1);near(doubled.KA,8);near(doubled.dxA,z.dxA);
  const faster=comparisonAt({...p,v:4},1);near(faster.KA,16);
  const zero=comparisonAt({...p,v:0,vB:0},10);assert.equal(zero.ended,true);near(zero.dxA,0);near(zero.KB,0);
- const end=comparisonAt(p,999);near(end.dxB,8);near(end.dxA,4);assert.equal(end.ended,true);
+ const end=comparisonAt(p,999);near(end.dxB,12);near(end.dxA,6);assert.equal(end.ended,true);
 });
 
 test('合併拋體：四方向、零初速、落地時間與能量守恆',async()=>{
@@ -260,4 +260,14 @@ test('功的原點位移向量：零值不畫，正負與上下左右端點共�
   assert.ok(match);assert.deepEqual(match.slice(1).map(Number),[0,0,axis==='x'?s*24:0,axis==='y'?-s*24:0]);
   assert.ok(html.indexOf('class="object"')<html.indexOf('class="path work-vector"'),'位移向量不被方箱遮蔽');
  }
+});
+
+
+test('功的播放示意：正負、零位移、起點與終點一致',async()=>{
+ const {workAt}=await import('../site/physics.js');
+ for(const s of [-8,-2,0,2,8]){
+  const p={s},a=workAt(p,0),b=workAt(p,999);near(a.s,0);near(b.s,s);assert.equal(b.ended,true);
+  if(s){const mid=workAt(p,Math.abs(s)/4);near(mid.s,s/2);near(directionalWork(10,mid.s,0,'right').W,5*s);assert.equal(mid.ended,false);}
+ }
+ assert.throws(()=>workAt({s:1},-1),RangeError);
 });

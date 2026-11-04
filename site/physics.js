@@ -72,7 +72,7 @@ export function machine(id, p) {
 }
 
 export function comparisonAt(p,time=0) {
-  const maxSpeed=Math.max(p.v,p.vB),duration=maxSpeed>0?8/maxSpeed:0,t=clamp(time,0,duration);
+  const maxSpeed=Math.max(p.v,p.vB),duration=maxSpeed>0?12/maxSpeed:0,t=clamp(time,0,duration);
   return {t,duration,dxA:p.v*t,dxB:p.vB*t,KA:kinetic(p.m,p.v),KB:kinetic(p.mB,p.vB),ended:time>=duration};
 }
 export function inclineComparison(p){
@@ -142,4 +142,11 @@ export function pendulumObservation(p,start,target){
   s=next;elapsed+=dt;
  }
  return {state:start,elapsed:0,reached:false};
+}
+
+// Work-only motion is a constant-speed teaching demonstration, not a dynamics solver.
+export function workAt(p,time=0){
+ if(!Number.isFinite(p.s)||!Number.isFinite(time)||time<0)throw new RangeError('位移或演示時間無效');
+ const duration=Math.abs(p.s)/2,t=clamp(time,0,duration);
+ return {s:duration?p.s*t/duration:0,t,duration,ended:time>=duration};
 }
