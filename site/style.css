@@ -332,3 +332,8 @@ body:is([data-mode=pendulum],[data-mode=damped]) #vector-legend{display:block;pa
 #vector-legend .resistance{color:#b74425}svg .force.resistance{stroke:#b74425}
 #vector-legend .resistance-scale{color:#b74425;font-weight:650}#vector-legend .resistance-scale i{border-color:#b74425}
 svg .pend-velocity{stroke-dasharray:none}
+
+/* Fixed reading rows prevent numeric width changes from shifting the pendulum. */
+.pend-vector-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px}
+.pend-vector-values>span{min-width:0}
+@container experiment (max-width:340px){body:is([data-mode=pendulum],[data-mode=damped]) #vector-legend{font-size:14px}.pend-vector-scales{font-size:12px}}
