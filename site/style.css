@@ -323,3 +323,12 @@ body[data-mode] .actions button{font-size:clamp(13px,4cqw,18px);min-height:48px}
 body.choice-open{overflow:hidden!important}
 body.compact-landscape .choice-trigger{height:48px;font-size:16px;padding:5px 8px}
 @media(max-width:700px){.selectors .choice-trigger{font-size:16px}}
+
+/* Pendulum forces: shared gravity/tension ruler; explicitly separate drag ruler. */
+body:is([data-mode=pendulum],[data-mode=damped]) #scene{aspect-ratio:640/580}
+body:is([data-mode=pendulum],[data-mode=damped]) #vector-legend{display:block;padding:5px 8px;font-size:16px;line-height:1.25}
+.pend-vector-values,.pend-vector-scales{display:flex;flex-wrap:wrap;gap:4px 12px}.pend-vector-scales{margin-top:4px;font-size:13px}
+#vector-legend .pend-vector-values>span{white-space:nowrap}#vector-legend .pend-vector-scales>span:before{display:none}
+#vector-legend .resistance{color:#b74425}svg .force.resistance{stroke:#b74425}
+#vector-legend .resistance-scale{color:#b74425;font-weight:650}#vector-legend .resistance-scale i{border-color:#b74425}
+svg .pend-velocity{stroke-dasharray:none}

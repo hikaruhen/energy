@@ -1,9 +1,9 @@
-import './choices.js?v=38';
-import {classroomTools,fairWheelTable,pairTable} from './classroom.js?v=38';
-import {groups,modes,defaults,shortNames,dragKeys} from './config.js?v=38';
-import {clamp,fmt,workAt,comparisonAt,kinetic,gravity,elastic,directionalWork,axisDisplacement,springAt,flightAt,projectileAt,pendulumInitial,pendulumForces,pendulumStep,pendulumEnergy,machine,inclineComparison,leverComparison,pulleyComparison,wheelComparison,approx,springObservationTime,pendulumObservation} from './physics.js?v=38';
-import {scene,workGeometry} from './scenes.js?v=38';
-import {comparisonDrop} from './comparison.js?v=38';
+import './choices.js?v=39';
+import {classroomTools,fairWheelTable,pairTable} from './classroom.js?v=39';
+import {groups,modes,defaults,shortNames,dragKeys} from './config.js?v=39';
+import {clamp,fmt,workAt,comparisonAt,kinetic,gravity,elastic,directionalWork,axisDisplacement,springAt,flightAt,projectileAt,pendulumInitial,pendulumForces,pendulumStep,pendulumEnergy,machine,inclineComparison,leverComparison,pulleyComparison,wheelComparison,approx,springObservationTime,pendulumObservation} from './physics.js?v=39';
+import {scene,workGeometry} from './scenes.js?v=39';
+import {comparisonDrop} from './comparison.js?v=39';
 const $=s=>document.querySelector(s);
 const states=Object.fromEntries(Object.keys(modes).map(id=>[id,defaults(id)]));
 let current='work2d',groupId='work',running=false,drag=null,lastFrame=0,paintTime=0;
@@ -70,7 +70,7 @@ function energyData(){
     const initial=gravity(p.m,p.g,p.L*(1-Math.cos(p.angle*Math.PI/180)));
     const at=s.pend||pendulumInitial(p);
     scale=initial||1;facts=[['初始釋放角度',p.angle,'°'],['目前角度',at.theta*180/Math.PI,'°'],['播放時間',s.time,'s'],['重力',p.m*p.g,'N'],['繩張力',pendulumForces(p,at).tension,'N']];
-    if(current==='damped')facts.push(['阻力大小',Math.abs(.3*p.L*at.omega),'N']);
+    if(current==='damped')facts.push(['阻力大小',pendulumForces({...p,damping:true},at).resistanceMagnitude,'N']);
     note=current==='damped'?'阻力使力學能轉為熱能；此總量包括熱能。':'最高點動能為0，最低點重力位能為0。';
   }else if(current==='wheel'){
     const z=wheelComparison(p);rows=[row('目前輸入功',z.W,'var(--kinetic)'),row('目前增加的位能',z.U,'var(--gravity)')];
@@ -183,7 +183,7 @@ function changeParam(key,value,from=null){
 function draw(){
   // Size interaction targets in CSS pixels, not in fixed SVG units.
   $('#work-scales').hidden=current!=='work2d';if(current==='work2d')$('#force-readout').textContent=`施力 ${state().p.F} N`;
-  svg.setAttribute('viewBox',current==='work2d'?workGeometry(state().p).viewBox:current==='compare'?'0 0 640 560':current==='fall'?'0 0 640 500':current==='wheel'?'0 0 640 560':['lever','pulley'].includes(current)?'0 0 640 520':current==='incline'?'0 0 640 460':'0 0 640 370');
+  svg.setAttribute('viewBox',current==='work2d'?workGeometry(state().p).viewBox:current==='compare'?'0 0 640 560':current==='fall'?'0 0 640 500':pendIds.includes(current)?'0 0 640 580':current==='wheel'?'0 0 640 560':['lever','pulley'].includes(current)?'0 0 640 520':current==='incline'?'0 0 640 460':'0 0 640 370');
   if(current==='work2d'){const pane=document.querySelector('#canvas-scroll');svg.style.setProperty('--work-view-size',Math.max(1,Math.floor(Math.min(pane.clientWidth,pane.clientHeight)))+'px');}
   svg.dataset.playbackTime=state().time;svg.dataset.playbackRate=state().rate||1;
   const matrix=svg.getScreenCTM();const scale=matrix?Math.hypot(matrix.a,matrix.b):1;const width=640*(scale||1);
@@ -201,7 +201,11 @@ function draw(){
     $('#vector-legend').innerHTML=`<div class="legend-reading applied"><b>重力：</b><strong>${fmt(p.m*p.g)} <small>N</small></strong></div><div class="legend-reading velocity"><b>速度：</b><strong>${fmt(z.v)} <small>m/s</small></strong></div><div class="legend-reading ruler-reading"><b>力的比例尺：</b><div><i style="width:${meta.forceRuler}px"></i><strong>${fmt(meta.forceUnit)} <small>N</small></strong></div></div>`;
   }
   if(current==='fall'&&state().view?.components){const z=projectileAt(state().p,state().time);$('#vector-legend').insertAdjacentHTML('beforeend',`<div class="component-reading">水平速度 ${approx(z.vx)} m/s · 鉛直速度 ${approx(z.vy)} m/s（右／上正）</div>`);}
-  if(pendIds.includes(current))$('#vector-legend').hidden=state().view?.forces===false;
+  if(pendIds.includes(current)){
+    const f=meta.forces,speed=Math.hypot(f.velocity.x,f.velocity.y),rulerValue=v=>new Intl.NumberFormat('zh-TW',{maximumSignificantDigits:4}).format(v);
+    $('#vector-legend').innerHTML=`<div class="pend-vector-values"><span class="gravity">重力 ${fmt(f.weight)} N</span><span class="tension">張力 ${fmt(f.tension)} N</span>${current==='damped'?`<span class="resistance">阻力 ${fmt(f.resistanceMagnitude)} N</span>`:''}<span class="velocity">速度 ${fmt(speed)} m/s</span></div><div class="pend-vector-scales"><span class="force-scale">重力／張力 <i style="width:${meta.forceRuler}px"></i>${rulerValue(meta.forceUnit)} N</span>${current==='damped'?`<span class="force-scale resistance-scale">阻力另尺 <i style="width:${meta.resistanceRuler}px"></i>${rulerValue(meta.resistanceUnit)} N</span>`:''}</div>`;
+    $('#vector-legend').hidden=state().view?.forces===false;
+  }
   // Transparent targets use screen pixels; do not enlarge the visible vectors.
   svg.querySelectorAll('circle.drag-zone').forEach(z=>z.setAttribute('r',48*640/width));
   svg.querySelectorAll('.drag-line').forEach(z=>z.setAttribute('stroke-width',112*640/width));

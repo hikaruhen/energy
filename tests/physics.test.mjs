@@ -271,3 +271,29 @@ test('功的播放示意：正負、零位移、起點與終點一致',async()=>
  }
  assert.throws(()=>workAt({s:1},-1),RangeError);
 });
+
+
+test('擺錘阻力始終反向且作負功，靜止與無阻力時為零',async()=>{
+ const {pendulumForces}=await import('../site/physics.js');
+ for(const theta of [-Math.PI/2,-.7,0,.7,Math.PI/2])for(const omega of [-3,-.1,0,.1,3]){
+  const p={m:2,L:1.5,g:9.8,damping:true},f=pendulumForces(p,{theta,omega});
+  near(f.resistanceMagnitude,.45*Math.abs(omega));
+  near(f.resistance.x*f.velocity.x+f.resistance.y*f.velocity.y,-.3*(1.5*omega)**2);
+  if(omega!==0)assert.ok(f.resistance.x*f.velocity.x+f.resistance.y*f.velocity.y<0);
+  const free=pendulumForces({...p,damping:false},{theta,omega});near(free.resistanceMagnitude,0);
+  const html=scene('damped',{p:{...p,angle:40},pend:{theta,omega,Q:0}}).html;
+  if(omega===0){assert.ok(!html.includes('class="force resistance"'));assert.ok(!html.includes('class="path pend-velocity"'));}
+ }
+});
+test('擺錘向量屏幕方向、各尺線性比例及張力重力共尺',()=>{
+ for(const theta of [-.8,0,.8])for(const omega of [-2,-.1,.1,2]){
+  const p={m:2,L:1.5,g:9.8,angle:90},s={p,pend:{theta,omega,Q:0}},r=scene('damped',s);
+  const get=kind=>{const m=r.html.match(new RegExp('<line x1="([^"]+)" y1="([^"]+)" x2="([^"]+)" y2="([^"]+)" class="'+kind+'"'));assert.ok(m,kind);return m.slice(1).map(Number);};
+  const a=get('force resistance'),v=get('path pend-velocity'),g=get('force gravity'),t=get('force tension');
+  assert.ok((a[2]-a[0])*(v[2]-v[0])+(a[3]-a[1])*(v[3]-v[1])<0);
+  near(Math.hypot(a[2]-a[0],a[3]-a[1])/r.meta.resistanceScale,.45*Math.abs(omega));
+  near(Math.hypot(g[2]-g[0],g[3]-g[1])/r.meta.forceScale,19.6);
+  near(Math.hypot(t[2]-t[0],t[3]-t[1])/r.meta.forceScale,r.meta.forces.tension);
+  const other=scene('damped',{...s,pend:{theta,omega:omega/2,Q:0}});assert.equal(other.meta.forceUnit,r.meta.forceUnit);assert.equal(other.meta.resistanceUnit,r.meta.resistanceUnit);assert.equal(other.meta.resistanceScale,r.meta.resistanceScale);
+ }
+});

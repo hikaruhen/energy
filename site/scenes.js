@@ -1,5 +1,5 @@
-import { springAt, flightAt, projectileAt, pendulumInitial, pendulumForces, axisDisplacement, machine, inclineComparison, leverComparison, pulleyComparison, wheelComparison, approx, fmt } from './physics.js?v=38';
-import {comparisonScene} from './comparison.js?v=38';
+import { springAt, flightAt, projectileAt, pendulumInitial, pendulumForces, PENDULUM_DAMPING, axisDisplacement, machine, inclineComparison, leverComparison, pulleyComparison, wheelComparison, approx, fmt } from './physics.js?v=39';
+import {comparisonScene} from './comparison.js?v=39';
 const line=(x1,y1,x2,y2,cls='ground',more='')=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="${cls}" ${more}/>`;
 const text=(x,y,t,cls='',anchor='start')=>`<text x="${x}" y="${y}" class="${cls} ${y<80||y>315?'caption':''}" text-anchor="${anchor}">${t}</text>`;
 const box=(x,y,w=58,h=52)=>`<rect x="${x-w/2}" y="${y-h}" width="${w}" height="${h}" rx="4" class="object"/><path d="M${x-8} ${y-h}v13h16v-13" fill="none" stroke="#795516" stroke-width="2"/>`;
@@ -12,7 +12,7 @@ const ground=()=>line(40,315,600,315)+text(45,350,'參考面 h = 0','small');
 // The full shaft carries the magnitude; a separate, fixed head indicates direction.
 function arrowDefs(scale){
  const marker=(id,color)=>`<marker id="${id}" markerUnits="userSpaceOnUse" viewBox="0 -6 12 12" refX="0" refY="0" markerWidth="${12/scale}" markerHeight="${12/scale}" orient="auto-start-reverse" overflow="visible"><path d="M2 -4.5L10 0L2 4.5" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>`;
- return `<defs>${marker('force-head','#b34829')}${marker('lift-head','#536675')}${marker('move-head','#476d7e')}${marker('tension-head','#124735')}${marker('gravity-head','#8656a3')}${marker('resistance-head','#267044')}</defs>`;
+ return `<defs>${marker('force-head','#b34829')}${marker('lift-head','#536675')}${marker('move-head','#476d7e')}${marker('tension-head','#124735')}${marker('gravity-head','#8656a3')}${marker('resistance-head','#b74425')}</defs>`;
 }
 export function scene(id,s,dragPixels=96) {
   const p=s.p,scale=96/dragPixels;let out='',hits='',meta={};
@@ -23,7 +23,9 @@ export function scene(id,s,dragPixels=96) {
   if(id==='pulley')maxForce=Math.max(maxForce,pulleyComparison(p).F);
   if(id==='wheel')maxForce=Math.max(maxForce,wheelComparison(p).F);
   else if(['incline','fixed','movable'].includes(id))maxForce=Math.max(maxForce,machine(id,{...p,progress:p.progress/100}).F);
-  const power=10**Math.floor(Math.log10(maxForce||1)),forceUnit=[1,2,5,10].map(n=>n*power).find(n=>n>=maxForce)||power*10,forceScale=(id==='fall'||id==='incline'?80:id==='throw'?25:60)/forceUnit;
+  const niceUnit=value=>{const power=10**Math.floor(Math.log10(value||1));return [1,2,5,10].map(n=>n*power).find(n=>n>=value)||power*10;};
+  let forceUnit=niceUnit(maxForce),forceScale=(id==='fall'||id==='incline'?80:id==='throw'?25:60)/forceUnit;
+  let forceRulerLength=(id==='fall'||id==='incline'?80:id==='throw'?25:60);
   const hit=(x,y,t)=>zone(x,y,t,dragPixels/2);
   if(id==='work2d'){
     const {dx,dy}=axisDisplacement(p.axis,p.s);
@@ -74,16 +76,22 @@ export function scene(id,s,dragPixels=96) {
     if(z.x!==0)out+=force(x+(z.x>0?-29:29),y-26,-p.k*z.x*forceScale,0)+text(435,120,'回復力','small');
     hits+=hit(x,y-26,'object');
   }else if(id==='pendulum'||id==='damped'){
-    const z=s.pend||pendulumInitial(p),scale=120,L=p.L*scale,cx=320,cy=50;
-    const x=cx+L*Math.sin(z.theta),y=cy+L*Math.cos(z.theta);
-    const a=cx-L,b=cx+L,top=cy;
-    out=line(230,30,410,30)+circle(cx,cy,6,'#405c66')+`<path d="M${a} ${top} A${L} ${L} 0 0 0 ${b} ${top}" class="reference"/>`+line(cx,cy,x,y,'rope')+line(60,cy+L+12,580,cy+L+12,'reference')+circle(x,y,12,'#f1bb55','#795516')+text(50,345,'最低點位能 = 0','small');
-    // Weight, tension and (optionally) resistance arrows are distinct.
-    const tension=pendulumForces(p,z).tension,tensionLength=tension*forceScale;
-    if(s.view?.forces!==false){out+=force(x,y+12,0,p.m*p.g*forceScale,'gravity');if(tension>0)out+=force(x-Math.sin(z.theta)*12,y-Math.cos(z.theta)*12,-Math.sin(z.theta)*tensionLength,-Math.cos(z.theta)*tensionLength,'tension');
-    if(id==='damped'&&z.omega!==0){const dampingForce=.3*p.L*z.omega*forceScale;out+=force(x-Math.sign(dampingForce)*Math.cos(z.theta)*12,y+Math.sign(dampingForce)*Math.sin(z.theta)*12,-Math.cos(z.theta)*dampingForce,Math.sin(z.theta)*dampingForce,'resistance');}
+    const z=s.pend||pendulumInitial(p),lengthScale=120,L=p.L*lengthScale,cx=320,cy=160,r=Math.max(12,7/scale);
+    const x=cx+L*Math.sin(z.theta),y=cy+L*Math.cos(z.theta),a=cx-L,b=cx+L;
+    const forces=pendulumForces({...p,damping:id==='damped'},z),vMax=Math.sqrt(2*p.g*p.L*(1-Math.cos(p.angle*Math.PI/180)));
+    forceUnit=niceUnit(forces.weight);forceScale=Math.min(100,p.L*60)/forces.weight;forceRulerLength=forceUnit*forceScale;
+    const resistanceUnit=niceUnit(PENDULUM_DAMPING*vMax||1),resistanceScale=110/resistanceUnit,speedScale=vMax?70/vMax:0;
+    out=line(230,140,410,140)+circle(cx,cy,6,'#405c66')+`<path d="M${a} ${cy} A${L} ${L} 0 0 0 ${b} ${cy}" class="reference"/>`+line(cx,cy,x,y,'rope')+line(60,cy+L+12,580,cy+L+12,'reference')+circle(x,y,r,'#f1bb55','#795516')+text(50,550,'最低點位能 = 0','small');
+    if(s.view?.forces!==false){
+      out+=force(x,y+r,0,forces.weight*forceScale,'gravity');
+      if(forces.tension>0)out+=force(x-Math.sin(z.theta)*r,y-Math.cos(z.theta)*r,-Math.sin(z.theta)*forces.tension*forceScale,-Math.cos(z.theta)*forces.tension*forceScale,'tension');
+      // World y is upward; SVG y is downward. Drag always opposes velocity.
+      if(forces.resistanceMagnitude>0){const ux=forces.resistance.x/forces.resistanceMagnitude,uy=-forces.resistance.y/forces.resistanceMagnitude;out+=force(x+ux*r,y+uy*r,forces.resistance.x*resistanceScale,-forces.resistance.y*resistanceScale,'resistance');}
+      const speed=Math.hypot(forces.velocity.x,forces.velocity.y);
+      if(speed>0)out+=motion(x+forces.velocity.x/speed*r,y-forces.velocity.y/speed*r,forces.velocity.x*speedScale,-forces.velocity.y*speedScale).replace('class="path"','class="path pend-velocity"');
     }
-    hits+=lineZone(cx+Math.sin(z.theta)*28,cy+Math.cos(z.theta)*28,x,y,'object',dragPixels)+hit(x,y,'object');meta={cx,cy};
+    hits+=lineZone(cx+Math.sin(z.theta)*28,cy+Math.cos(z.theta)*28,x,y,'object',dragPixels)+hit(x,y,'object');
+    meta={cx,cy,x,y,r,forces,forceScale,resistanceUnit,resistanceRuler:110*scale,resistanceScale,speedScale};
   }else if(id==='incline'){
     const sc=Math.min(300/p.L,150/p.H),dx=Math.sqrt(Math.max(0,p.L*p.L-p.H*p.H))*sc,dy=p.H*sc,x0=190,y0=345;
     const x=x0+dx*p.progress/100,y=y0-dy*p.progress/100,angle=-Math.atan2(dy,dx)*180/Math.PI;
@@ -165,7 +173,7 @@ export function scene(id,s,dragPixels=96) {
     out+=text(35,535,`拉繩 ${fmt(z.s)} m → 物件上升 ${fmt(z.h)} m`,'small');
     hits+=lineZone(cx+input,cy,cx+input,yr,'object',dragPixels)+hit(cx+input,yr,'object');meta={...z,start:225,scale:sc,yl,yr};
   }
-  return {html:arrowDefs(scale)+out+hits,meta:{...meta,forceUnit,forceRuler:(id==='fall'||id==='incline'?80:id==='throw'?25:60)*scale}};
+  return {html:arrowDefs(scale)+out+hits,meta:{...meta,forceUnit,forceRuler:forceRulerLength*scale}};
 }
 
 export function workGeometry(p) {

@@ -33,9 +33,12 @@ export function projectileAt(p,t=0){
   return {x:vx*time,h,vx,vy,v:speed,t:time,end,K:kinetic(p.m,speed),U:gravity(p.m,p.g,h),E:kinetic(p.m,Math.hypot(vx,vy0))+gravity(p.m,p.g,p.h),ended:t>=end};
 }
 export function pendulumInitial(p) { return { theta: p.angle * Math.PI / 180, omega: 0, Q: 0 }; }
+export const PENDULUM_DAMPING=.3;
 export function pendulumForces(p,s){
   const cos=Math.abs(s.theta)===Math.PI/2?0:Math.cos(s.theta);
-  return {weight:p.m*p.g,tension:Math.max(0,p.m*(p.g*cos+p.L*s.omega*s.omega))};
+  const velocity={x:p.L*s.omega*Math.cos(s.theta),y:p.L*s.omega*Math.sin(s.theta)};
+  const b=p.damping?PENDULUM_DAMPING:0,resistance={x:-b*velocity.x,y:-b*velocity.y};
+  return {weight:p.m*p.g,tension:Math.max(0,p.m*(p.g*cos+p.L*s.omega*s.omega)),velocity,resistance,resistanceMagnitude:Math.hypot(resistance.x,resistance.y)};
 }
 export function pendulumEnergy(p, s) {
   const K = kinetic(p.m, p.L * s.omega), U = gravity(p.m, p.g, p.L * (1 - Math.cos(s.theta)));
@@ -44,7 +47,7 @@ export function pendulumEnergy(p, s) {
 // RK4 integrates angle, angular velocity and dissipated energy together.
 // Drag force = -b*v, b = 0.3 kg/s in the resistance mode.
 export function pendulumStep(p, s, dt) {
-  const b = p.damping ? 0.3 : 0;
+  const b = p.damping ? PENDULUM_DAMPING : 0;
   const f = a => [a[1], -p.g / p.L * Math.sin(a[0]) - b / p.m * a[1], b * p.L * p.L * a[1] * a[1]];
   const a = [s.theta, s.omega, s.Q], add = (v, k, h) => v.map((x, i) => x + h * k[i]);
   const k1 = f(a), k2 = f(add(a, k1, dt / 2)), k3 = f(add(a, k2, dt / 2)), k4 = f(add(a, k3, dt));
