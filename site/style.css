@@ -304,3 +304,22 @@ body[data-mode] #slow-replay:disabled{opacity:.5;cursor:default}
 body[data-mode=work2d] .actions{grid-template-columns:repeat(4,minmax(0,1fr))}
 body[data-mode=work2d] #calculate{grid-column:span 2}
 @container experiment (max-width:310px){body[data-mode] .actions{grid-template-columns:repeat(4,minmax(0,1fr))}body[data-mode] #calculate{grid-column:span 2}}
+
+/* The same five controls in every scene; positioning tools remain with parameters. */
+body[data-mode] .actions{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+body[data-mode] #calculate{grid-column:auto}
+body[data-mode] .actions button{font-size:clamp(13px,4cqw,18px);min-height:48px}
+.actions :is(#play,#slow-replay)[aria-pressed=true]{background:#006c70;color:white;border-color:#006c70}
+#work-position-tools{display:flex;gap:6px;margin-top:8px}#work-position-tools button{flex:1;min-height:48px;font-size:16px;padding:5px}
+@container experiment (max-width:270px){body[data-mode] .actions{grid-template-columns:repeat(3,minmax(0,1fr))}body[data-mode] #calculate{grid-column:auto}}
+/* In-page choices rotate with the application; no portrait-only OS picker. */
+.native-choice{position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important;min-height:1px!important;overflow:hidden}
+.choice-trigger{width:100%;min-width:0;min-height:48px;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;font-size:19px;font-weight:400;border:1px solid #99afa3;padding:8px 10px;background:white}
+.choice-trigger span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.choice-trigger:after{content:'⌄';flex:none}.parameter .choice-trigger{margin-top:7px;font-size:18px}
+.choice-overlay{position:fixed;inset:0;z-index:100;background:#173d4566;display:flex;align-items:center;justify-content:center;padding:12px;overscroll-behavior:contain}
+.choice-panel{width:min(440px,100%);max-height:100%;min-height:0;overflow:auto;border:1px solid #8da79b;border-radius:10px;background:white;padding:8px;box-shadow:0 5px 25px #18373e44;overscroll-behavior:contain}
+.choice-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;position:sticky;top:-8px;background:white;padding:0 0 6px;z-index:1}.choice-heading h2{font-size:20px}.choice-close{min-width:48px;min-height:48px;font-size:18px;padding:4px}
+.choice-options{display:grid;gap:5px}.choice-option{width:100%;min-height:48px;font-size:19px;text-align:left;padding:9px 12px}.choice-option[aria-pressed=true]{background:#e0efea;border:2px solid #006c70;color:#005b5f;font-weight:700}
+body.choice-open{overflow:hidden!important}
+body.compact-landscape .choice-trigger{height:48px;font-size:16px;padding:5px 8px}
+@media(max-width:700px){.selectors .choice-trigger{font-size:16px}}

@@ -1,8 +1,9 @@
-import {classroomTools,fairWheelTable,pairTable} from './classroom.js?v=37';
-import {groups,modes,defaults,shortNames,dragKeys} from './config.js?v=37';
-import {clamp,fmt,workAt,comparisonAt,kinetic,gravity,elastic,directionalWork,axisDisplacement,springAt,flightAt,projectileAt,pendulumInitial,pendulumForces,pendulumStep,pendulumEnergy,machine,inclineComparison,leverComparison,pulleyComparison,wheelComparison,approx,springObservationTime,pendulumObservation} from './physics.js?v=37';
-import {scene,workGeometry} from './scenes.js?v=37';
-import {comparisonDrop} from './comparison.js?v=37';
+import './choices.js?v=38';
+import {classroomTools,fairWheelTable,pairTable} from './classroom.js?v=38';
+import {groups,modes,defaults,shortNames,dragKeys} from './config.js?v=38';
+import {clamp,fmt,workAt,comparisonAt,kinetic,gravity,elastic,directionalWork,axisDisplacement,springAt,flightAt,projectileAt,pendulumInitial,pendulumForces,pendulumStep,pendulumEnergy,machine,inclineComparison,leverComparison,pulleyComparison,wheelComparison,approx,springObservationTime,pendulumObservation} from './physics.js?v=38';
+import {scene,workGeometry} from './scenes.js?v=38';
+import {comparisonDrop} from './comparison.js?v=38';
 const $=s=>document.querySelector(s);
 const states=Object.fromEntries(Object.keys(modes).map(id=>[id,defaults(id)]));
 let current='work2d',groupId='work',running=false,drag=null,lastFrame=0,paintTime=0;
@@ -150,6 +151,7 @@ function syncControls(skip=null){
       if(el!==skip){el.value=state().p[d.key];el.removeAttribute('aria-invalid');const error=$('#error-'+d.key);if(error)error.textContent='';}
     });
   }
+  document.dispatchEvent(new Event('choices-sync'));
 }
 function rebase(){delete state().workPlayback;state().rate=1;state().time=0;state().pend=null;if(current==='spring')state().springStarted=false;running=false;updateButtons();}
 function changeParam(key,value,from=null){
@@ -223,11 +225,13 @@ function ended(){
  const s=state();return current==='work2d'?!!s.workPlayback&&workAt(s.p,s.time).ended:current==='compare'?comparisonAt(s.p,s.time).ended:['fall','throw'].includes(current)?projectileAt(s.p,s.time).ended:['incline','lever','pulley'].includes(current)?s.p.progress>=100:current==='wheel'?s.p.stroke>=wheelComparison(s.p).targetStroke:false;
 }
 function updateButtons(){
- const s=state();$('#work-locate').hidden=current!=='work2d';$('#work-center').hidden=current!=='work2d';$('#play').hidden=false;$('#step').hidden=false;
- $('#play').textContent=running?'暫停':ended()?'重播':'播放';
- $('#calculate').textContent='計算＋播放';$('#calculate').setAttribute('aria-pressed',String(s.calculated));
- $('#slow-replay').disabled=!s.calculated;
- $('#live-state').textContent=s.calculated?`${running?'播放中':'已暫停'} · ${s.rate===.25?'¼× 慢速':'1×'}`:'按計算＋播放';
+ const s=state();$('#work-position-tools').hidden=current!=='work2d';$('#work-locate').hidden=current!=='work2d';$('#work-center').hidden=current!=='work2d';
+ $('#calculate').textContent='計算';$('#calculate').setAttribute('aria-pressed',String(s.calculated));
+ $('#play').textContent='播放';$('#slow-replay').textContent='慢速';$('#slow-replay').disabled=false;
+ for(const [id,rate] of [['play',1],['slow-replay',.25]]){
+  const active=running&&(s.rate||1)===rate;$('#'+id).setAttribute('aria-pressed',String(active));$('#'+id).title=active?'再次按下暫停':rate===1?'正常速度播放':'四分之一速度播放';
+ }
+ $('#live-state').textContent=running?`播放中 · ${s.rate===.25?'¼× 慢速':'1×'}`:s.calculated?'已計算 · 已暫停':'按計算看結果';
 }
 let hintTimer;
 function hint(message,persist=false){clearTimeout(hintTimer);$('#gesture-hint').textContent=message;$('#gesture-hint').hidden=false;if(!persist)hintTimer=setTimeout(()=>$('#gesture-hint').hidden=true,2200);}
@@ -321,8 +325,12 @@ function startPlayback(rate=1){
  if(current==='damped')hint('從初始條件重播，累積熱能由 0 重新起算');
  $('#status').textContent=rate===.25?'從初始條件以四分之一速度重播，物理數值不變':'已計算並從初始條件播放';
 }
-$('#calculate').addEventListener('click',()=>startPlayback(1));
-$('#slow-replay').addEventListener('click',()=>startPlayback(.25));
+$('#calculate').addEventListener('click',()=>{
+ const invalid=$('#controls [aria-invalid="true"]');if(invalid){invalid.focus();$('#status').textContent='請先修正輸入';return;}
+ running=false;if(state().pair)state().pair.running=false;state().calculated=true;draw();results();updateButtons();
+ $('#status').textContent='已計算目前狀態，物件保持不動';
+});
+$('#slow-replay').addEventListener('click',()=>togglePlayback(.25));
 $('#work-center').addEventListener('click',()=>{
   if(current!=='work2d')return;
   if(drag&&svg.hasPointerCapture(drag.id))svg.releasePointerCapture(drag.id);drag=null;
@@ -346,13 +354,17 @@ function advance(dt){
   if(current==='compare'&&s.time>=geometry.duration){s.time=geometry.duration;running=false;updateButtons();}
   if(['fall','throw'].includes(current)&&projectileAt(s.p,s.time).ended){running=false;updateButtons();$('#status').textContent='演示截至接地前，不模擬碰撞。';}
 }
-$('#play').addEventListener('click',()=>{
- if(state().pair)state().pair.running=false;
- if(!running&&(ended()||current==='work2d'&&!state().workPlayback)){startPlayback(state().rate||1);return;}
- running=!running;if(current==='spring'&&running){state().springStarted=true;syncControls();}lastFrame=0;draw();results();updateButtons();
- $('#status').textContent=running?'播放中；可暫停或抓取物件':'已暫停，可繼續播放';
-});
-$('#step').addEventListener('click',()=>{if(current==='work2d'&&!state().workPlayback){state().workPlayback=true;state().time=0;}running=false;advance(1/30);draw();results();syncControls();updateButtons();$('#status').textContent='前進1/30秒，保留計算啟用狀態。';});
+function togglePlayback(rate){
+ const s=state(),invalid=$('#controls [aria-invalid="true"]');if(invalid){invalid.focus();return;}
+ if(s.pair)s.pair.running=false;
+ if(running&&(s.rate||1)===rate){running=false;draw();results();updateButtons();return;}
+ if(ended()||current==='work2d'&&!s.workPlayback){startPlayback(rate);return;}
+ s.calculated=true;s.rate=rate;running=true;lastFrame=0;
+ if(current==='spring')s.springStarted=true;
+ draw();results();syncControls();updateButtons();$('#status').textContent=rate===.25?'四分之一速度播放；再次按下慢速可暫停':'正常速度播放；再次按下播放可暫停';
+}
+$('#play').addEventListener('click',()=>togglePlayback(1));
+$('#step').addEventListener('click',()=>{state().calculated=true;if(current==='work2d'&&!state().workPlayback){state().workPlayback=true;state().time=0;}running=false;advance(1/30);draw();results();syncControls();updateButtons();$('#status').textContent='前進1/30秒，保留計算啟用狀態。';});
 function frame(t){
   const pair=state().pair;
   if(pair?.running){const dt=pair.last?Math.min((t-pair.last)/1000,.05):0;pair.last=t;let left=dt;while(left>1e-10){const h=Math.min(left,1/240);pair.no=pendulumStep({...pair.p,damping:false},pair.no,h);pair.yes=pendulumStep({...pair.p,damping:true},pair.yes,h);left-=h;}pair.time+=dt;}
