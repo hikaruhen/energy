@@ -14,7 +14,7 @@ export const groups = [
 ];
 export const modes = {
   work2d:{title:'功',task:'',hint:'',params:[n('F','施力大小','N',0,100,10,10),choice('direction','施力方向',[['right','向右 →'],['left','向左 ←'],['up','向上 ↑'],['down','向下 ↓']],'right'),choice('axis','位移方向',[['x','左右 ↔'],['y','上下 ↕']],'x'),n('s','位移','m（右／上為正）',-8,8,1,2)],model:''},
-  compare:{title:'動能：兩組方塊比較',task:'',hint:'兩組各自堆疊2kg方塊、調整整數速率，同時演示移動。',params:[n('m','A質量','kg',2,20,2,2),n('v','A速率','m/s',0,10,1,2),n('mB','B質量','kg',2,20,2,2),n('vB','B速率','m/s',0,10,1,2)],animate:true,model:''},
+  compare:{title:'動能：兩組方塊比較',task:'',hint:'兩組各自堆疊2kg方塊、調整整數速率，同時演示移動。',params:[n('m','A質量','kg',2,10,2,2),n('v','A速率','m/s',0,10,1,2),n('mB','B質量','kg',2,10,2,2),n('vB','B速率','m/s',0,10,1,2)],animate:true,model:''},
   fall:{title:'落下與拋體運動',task:'',hint:'拖曳設定高度，選擇初始速度大小與方向。',params:[mass(),height(),n('v','初始速率','m/s',0,10,1,0),choice('direction','初始速度方向',[['none','無'],['up','向上 ↑'],['down','向下 ↓'],['left','向左 ←'],['right','向右 →']],'none'),g()],animate:true,model:''},
   spring:{title:'彈簧：形變與儲能',task:'相同的壓縮量與拉長量，儲存的能量相同嗎？',hint:'左右拖方箱。放開不自動播放；灰色虛線是彈簧原長位置。',params:[mass(),n('k','彈簧常數（補充）','N/m',10,100,10,50),n('x','初始設定形變','m',-.5,.5,.01,-.2)],animate:true,model:'理想線性、無質量彈簧，水平無摩擦，方箱始終連接彈簧。回復力 F=−kx，朝向原長；x(t)=x₀cos(√(k/m)t)，以解析解維持能量。'+commonEnergy},
   pendulum:{title:'擺錘：力學能守恆',task:'找出動能最大與重力位能最大的擺動位置。',hint:'拖曳擺錘或繩線設定靜止釋放角度；只能沿圓弧移動。',params:[mass(),n('L','擺長','m',.5,2,.1,1.5),n('angle','初始靜止釋放角度','°',-90,90,1,40),g()],animate:true,model:'固定懸點、繩長不變、無阻力；最低點為零位能。h=L(1−cosθ)，θ″=−g/L·sinθ。繩張力沿繩向懸點，與瞬時速度垂直，不作功。採非線性擺模型與小步長RK4；不是全範圍小角近似。'+commonEnergy},

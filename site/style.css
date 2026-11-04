@@ -289,3 +289,9 @@ body[data-mode=work2d] #scene-wrap{touch-action:none}
 /* Keep the work action labels proportional to their own available row. */
 body[data-mode=work2d] .actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));container-type:inline-size;padding:5px;gap:4px}
 body[data-mode=work2d] .actions button{font-size:clamp(13px,5cqw,18px);min-height:48px;padding:5px 2px;white-space:nowrap;line-height:1.25}
+/* Comparison readings occupy fixed side positions, outside the moving stacks. */
+body[data-mode=compare] #scene{aspect-ratio:640/560}
+body[data-mode=compare] svg :is(.mass-label,.speed-label,.lane-name){font-size:var(--compare-reading-font,30px);font-weight:650}
+body[data-mode=compare] svg .tick-number{font-size:var(--compare-tick-font,24px)}
+body[data-mode=compare] .actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));container-type:inline-size;padding:5px;gap:4px}
+body[data-mode=compare] .actions button{font-size:clamp(13px,4cqw,17px);min-height:48px;padding:5px 2px;white-space:nowrap;line-height:1.25}
